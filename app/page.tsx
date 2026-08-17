@@ -46,16 +46,15 @@ function StoryCard({ story, index }: { story: { category: string; title: string;
 
 export default async function Home() {
   const articles = await getPublishedArticles();
-  const stories = articles.length > 0
-    ? articles.map((article: Article) => ({
+  const publishedStories = articles.map((article: Article) => ({
         category: article.category?.[0]?.name || "DFNews",
         title: article.title,
         excerpt: article.excerpt || article.content.slice(0, 180),
         tone: "tone-blue",
         image_url: article.image_url,
         source_name: article.source_name,
-      }))
-    : demoStories;
+      }));
+  const stories = [...publishedStories, ...demoStories];
 
   return (
     <main className="feed-shell">
