@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: DFNews Feed
- * Description: Feed vertical mobile-first para notícias do Distrito Federal e Centro-Oeste.
+ * Description: Feed vertical mobile-first para notícias do Distrito Federal e Entorno.
  * Version: 0.1.0
  * Author: DFNews
  */

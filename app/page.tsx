@@ -6,7 +6,7 @@ const demoStories = [
   {
     category: "Distrito Federal",
     title: "DFNews está chegando com informação local em um novo formato",
-    excerpt: "Um feed rápido, visual e direto para acompanhar o que acontece no Distrito Federal e no Centro-Oeste.",
+    excerpt: "Um feed rápido, visual e direto para acompanhar o que acontece no Distrito Federal e no Entorno.",
     tone: "tone-blue",
   },
   {
@@ -16,7 +16,7 @@ const demoStories = [
     tone: "tone-orange",
   },
   {
-    category: "Centro-Oeste",
+    category: "Entorno",
     title: "Um olhar regional, com identidade e voz próprias",
     excerpt: "O projeto será construído para valorizar fontes locais e apresentar notícias com clareza e contexto.",
     tone: "tone-purple",
@@ -56,7 +56,7 @@ export default async function Home() {
     <main className="feed-shell">
       <header className="topbar">
         <div className="brand-mark" aria-label="DFNews">DF<span>NEWS</span></div>
-        <div className="topbar-note">Distrito Federal & Centro-Oeste</div>
+        <div className="topbar-note">Distrito Federal & Entorno</div>
       </header>
 
       <nav className="category-bar" aria-label="Categorias">

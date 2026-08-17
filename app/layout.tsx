@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DFNews — Distrito Federal e Centro-Oeste",
-  description: "Notícias do Distrito Federal, entorno e Centro-Oeste.",
+  title: "DFNews — Distrito Federal e Entorno",
+  description: "Notícias do Distrito Federal e do Entorno.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

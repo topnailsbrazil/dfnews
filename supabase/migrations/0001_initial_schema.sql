@@ -69,7 +69,6 @@ create policy "public can submit comments"
 insert into public.categories (name, slug) values
   ('Distrito Federal', 'distrito-federal'),
   ('Entorno', 'entorno'),
-  ('Centro-Oeste', 'centro-oeste'),
   ('Política', 'politica'),
   ('Serviços', 'servicos'),
   ('Segurança', 'seguranca'),

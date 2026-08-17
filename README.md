@@ -1,6 +1,6 @@
 # DFNews
 
-MVP de um portal mobile-first de notícias do Distrito Federal e Centro-Oeste.
+MVP de um portal mobile-first de notícias do Distrito Federal e Entorno.
 
 ## Stack
 
