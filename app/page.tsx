@@ -1,4 +1,5 @@
 import { getPublishedArticles, type Article } from "../lib/articles";
+import FeedDemo from "./FeedDemo";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,10 @@ const demoStories = [
     excerpt: "O projeto será construído para valorizar fontes locais e apresentar notícias com clareza e contexto.",
     tone: "tone-purple",
   },
+  { category: "Fato ou Fake", title: "DFJA explica: como conferir uma informação antes de compartilhar", excerpt: "Veja sinais de alerta e fontes oficiais para verificar conteúdos que circulam nas redes sociais.", tone: "tone-green" },
+  { category: "Tecnologia", title: "Serviços digitais ganham espaço na rotina dos moradores do DF", excerpt: "Aplicativos e plataformas públicas ajudam a resolver demandas sem deslocamento.", tone: "tone-cyan" },
+  { category: "Concursos", title: "Concursos e seleções movimentam oportunidades no Distrito Federal", excerpt: "Acompanhe editais, inscrições, prazos e informações confirmadas pelos órgãos responsáveis.", tone: "tone-orange" },
+  { category: "Emprego", title: "Feiras e vagas aproximam candidatos de empresas no DF e Entorno", excerpt: "Confira oportunidades e orientações para participar dos processos seletivos.", tone: "tone-purple" },
 ];
 
 function StoryCard({ story, index }: { story: { category: string; title: string; excerpt: string; tone: string; image_url?: string | null; source_name?: string | null }; index: number }) {
@@ -59,17 +64,7 @@ export default async function Home() {
         <div className="topbar-note">Distrito Federal & Entorno</div>
       </header>
 
-      <nav className="category-bar" aria-label="Categorias">
-        {["Para você", "DF", "Entorno", "Política", "Serviços", "Segurança", "Cultura", "Esportes"].map((item, index) => (
-          <button className={index === 0 ? "category active" : "category"} key={item} type="button">
-            {item}
-          </button>
-        ))}
-      </nav>
-
-      <section className="feed" aria-label="Feed de notícias">
-        {stories.map((story, index) => <StoryCard key={story.title} story={story} index={index} />)}
-      </section>
+      <FeedDemo stories={stories} />
     </main>
   );
 }
