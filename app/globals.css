@@ -38,21 +38,21 @@ button { font: inherit; }
 .story-content { align-self: end; max-width: 720px; width: 100%; }
 .story-meta, .story-footer { color: var(--muted); display: flex; font-size: 12px; justify-content: space-between; letter-spacing: .05em; text-transform: uppercase; }
 .story-meta span:first-child { color: var(--accent); font-weight: 700; }
-.story-avatar { align-items: center; background: #fff; border: 3px solid rgba(255,255,255,.85); border-radius: 50%; color: #0b6f66; display: flex; font-size: 9px; font-weight: 900; height: 55px; justify-content: center; letter-spacing: -.08em; margin-bottom: 2px; width: 55px; }
+.story-avatar { align-items: center; background: #fff; border: 3px solid rgba(255,255,255,.9); border-radius: 50%; color: #0b6f66; display: flex; font-size: 9px; font-weight: 900; height: 48px; justify-content: center; letter-spacing: -.08em; margin-bottom: 6px; width: 48px; }
 .story-avatar span { color: #f23b72; font-size: 8px; }
 .story h1 { font-size: clamp(24px, 5.8vw, 48px); letter-spacing: -.035em; line-height: 1.04; margin: 12px 0; max-width: 620px; }
 .story p { color: #d9e1ea; font-size: clamp(15px, 2vw, 18px); line-height: 1.4; margin: 0 0 22px; max-width: 560px; }
 .story-hint { color: #fff; font-size: 12px; font-weight: 700; margin-bottom: 18px; text-align: center; }
 .story-footer { border-top: 1px solid rgba(255,255,255,.2); padding-top: 14px; }
 .social-rail { bottom: 110px; display: grid; gap: 13px; position: absolute; right: 14px; z-index: 3; }
-.social-action { align-items: center; backdrop-filter: blur(12px); background: rgba(12,16,25,.72); border: 1px solid rgba(255,255,255,.2); border-radius: 16px; color: #fff; cursor: pointer; display: flex; flex-direction: column; font-size: 21px; gap: 2px; height: 55px; justify-content: center; transition: background .2s, transform .2s, border-color .2s; width: 55px; }
-.social-action:hover { background: rgba(85,214,190,.22); border-color: var(--accent); transform: translateY(-2px); }
+.social-action { align-items: center; background: transparent; border: 0; color: #fff; cursor: pointer; display: flex; flex-direction: column; font-size: 21px; gap: 4px; justify-content: center; padding: 0; transition: transform .2s; width: 56px; }
+.social-action:hover { transform: translateY(-2px); }
 .social-action:active { transform: scale(.93); }
-.social-action span { line-height: 1; }
-.social-action svg { fill: currentColor; height: 23px; width: 23px; }
+.social-action span { align-items: center; background: rgba(48,49,54,.92); border-radius: 50%; display: flex; height: 45px; justify-content: center; line-height: 1; width: 45px; }
+.social-action svg { fill: currentColor; height: 22px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; width: 22px; }
 .social-action small { color: #dce7ef; font-size: 9px; font-weight: 700; }
-.social-action.is-liked { background: rgba(242,59,114,.25); border-color: #f23b72; color: #ff6d99; }
-.social-action.is-commenting { background: rgba(85,214,190,.25); border-color: var(--accent); }
+.social-action.is-liked span { background: rgba(242,59,114,.75); color: #fff; }
+.social-action.is-commenting span { background: rgba(85,214,190,.75); color: #06221e; }
 .comment-box { background: rgba(6,12,22,.94); border: 1px solid rgba(255,255,255,.2); border-radius: 16px; bottom: 24px; display: grid; gap: 9px; left: 18px; padding: 14px; position: absolute; right: 18px; z-index: 4; }
 .comment-box strong { font-size: 13px; }
 .comment-box textarea { background: #101a28; border: 1px solid rgba(255,255,255,.15); border-radius: 9px; color: #fff; min-height: 58px; padding: 9px; resize: vertical; }

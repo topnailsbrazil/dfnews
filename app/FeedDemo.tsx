@@ -16,7 +16,7 @@ export default function FeedDemo({ stories }: { stories: Array<{ category: strin
   const touchStart = useRef<number | null>(null);
   const visible = useMemo(() => selected === "Para você" ? stories : stories.filter((story) => story.category === selected), [selected, stories]);
 
-  const Icon = ({ type }: { type: "like" | "share" | "comment" }) => type === "like" ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v10H4V10h3Zm2 10V10l4-8 1 1c.7.8.8 1.9.4 2.9L13.5 9H19c1.1 0 2 .9 2 2l-1 7c-.2 1.1-1.1 2-2.2 2H9Z" /></svg> : type === "share" ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5-5 5v-3c-4.8.1-7.4 1.7-9 5 .2-5.1 2.3-9 9-10V5Z" /></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v11H9l-4 3V5Zm3 4h8M8 12h5" /></svg>;
+  const Icon = ({ type }: { type: "like" | "share" | "comment" }) => type === "like" ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v10H4V10h3Zm2 10V10l4-8 1 1c.7.8.8 1.9.4 2.9L13.5 9H19c1.1 0 2 .9 2 2l-1 7c-.2 1.1-1.1 2-2.2 2H9Z" /></svg> : type === "share" ? <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.2" /><circle cx="17.5" cy="5.5" r="2.2" /><circle cx="17.5" cy="18.5" r="2.2" /><path d="m7.8 11 7.6-4.3M7.8 13l7.6 4.3" /></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v11H9l-4 3V5Z" /></svg>;
 
   return <div className="device-stage"><div className="phone-frame"><div className="phone-screen">
     <nav className="category-bar" aria-label="Categorias">
