@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 const demoStories = [
   {
     category: "Distrito Federal",
-    title: "DFNews está chegando com informação local em um novo formato",
+    title: "DFJá está chegando com informação local em um novo formato",
     excerpt: "Um feed rápido, visual e direto para acompanhar o que acontece no Distrito Federal e no Entorno.",
     tone: "tone-blue",
     image_url: "https://images.unsplash.com/photo-1585202900225-6d3ac20a6962?auto=format&fit=crop&w=1600&q=80",
@@ -45,7 +45,7 @@ function StoryCard({ story, index }: { story: { category: string; title: string;
         <div className="story-meta"><span>{story.category}</span><span>{story.source_name || "Agora"}</span></div>
         <h1>{story.title}</h1>
         <p>{story.excerpt}</p>
-        <div className="story-footer"><span>DFNews</span><span>{String(index + 1).padStart(2, "0")}</span></div>
+        <div className="story-footer"><span>DFJá</span><span>{String(index + 1).padStart(2, "0")}</span></div>
       </div>
     </article>
   );
@@ -54,7 +54,7 @@ function StoryCard({ story, index }: { story: { category: string; title: string;
 export default async function Home() {
   const articles = await getPublishedArticles();
   const publishedStories = articles.map((article: Article) => ({
-        category: article.category?.[0]?.name || "DFNews",
+        category: article.category?.[0]?.name || "DFJá",
         title: article.title,
         excerpt: article.excerpt || article.content.slice(0, 180),
         tone: "tone-blue",
@@ -66,7 +66,7 @@ export default async function Home() {
   return (
     <main className="feed-shell">
       <header className="topbar">
-        <div className="brand-mark" aria-label="DFNews">DF<span>NEWS</span></div>
+        <div className="brand-mark" aria-label="DFJá">DF<span>JÁ</span></div>
         <div className="topbar-note">Distrito Federal & Entorno</div>
       </header>
 

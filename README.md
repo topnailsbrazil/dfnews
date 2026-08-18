@@ -1,4 +1,6 @@
-# DFNews
+# DFJá
+
+Domínio previsto: https://dfja.com.br
 
 MVP de um portal mobile-first de notícias do Distrito Federal e Entorno.
 

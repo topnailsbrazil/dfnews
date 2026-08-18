@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DFNews — Distrito Federal e Entorno",
+  title: "DFJá — Distrito Federal e Entorno",
   description: "Notícias do Distrito Federal e do Entorno.",
 };
 

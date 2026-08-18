@@ -1,10 +1,10 @@
 (function () {
   'use strict';
 
-  const config = window.dfnewsConfig || {};
-  const list = document.getElementById('dfnews-feed-list');
-  const modal = document.getElementById('dfnews-modal');
-  const modalContent = document.getElementById('dfnews-modal-content');
+  const config = window.dfjaConfig || {};
+  const list = document.getElementById('dfja-feed-list');
+  const modal = document.getElementById('dfja-modal');
+  const modalContent = document.getElementById('dfja-modal-content');
   let page = 1;
   let loading = false;
   let hasMore = true;
@@ -18,18 +18,18 @@
     const image = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '';
     const excerpt = post.excerpt?.rendered?.replace(/<[^>]+>/g, '').slice(0, 180) || '';
     const card = document.createElement('article');
-    card.className = 'dfnews-card';
-    card.innerHTML = `${image ? `<img class="dfnews-card-image" src="${escapeHtml(image)}" alt="">` : ''}<div class="dfnews-card-shade"></div><div class="dfnews-card-content"><span class="dfnews-card-meta">DFNews</span><h2>${escapeHtml(post.title?.rendered)}</h2><p>${escapeHtml(excerpt)}</p><button class="dfnews-read" type="button">Ler notícia</button></div>`;
-    card.querySelector('.dfnews-read').addEventListener('click', () => openPost(post));
+    card.className = 'dfja-card';
+    card.innerHTML = `${image ? `<img class="dfja-card-image" src="${escapeHtml(image)}" alt="">` : ''}<div class="dfja-card-shade"></div><div class="dfja-card-content"><span class="dfja-card-meta">DFJá</span><h2>${escapeHtml(post.title?.rendered)}</h2><p>${escapeHtml(excerpt)}</p><button class="dfja-read" type="button">Ler notícia</button></div>`;
+    card.querySelector('.dfja-read').addEventListener('click', () => openPost(post));
     return card;
   }
 
   function openPost(post) {
-    modalContent.innerHTML = `<h1>${escapeHtml(post.title?.rendered)}</h1><div class="dfnews-modal-body">${post.content?.rendered || ''}</div>`;
+    modalContent.innerHTML = `<h1>${escapeHtml(post.title?.rendered)}</h1><div class="dfja-modal-body">${post.content?.rendered || ''}</div>`;
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
-    history.pushState({ dfnewsPost: post.id }, '', `?post=${post.id}`);
-    fetch(`${config.ajaxUrl}?action=dfnews_get_comments&post_id=${post.id}`);
+    history.pushState({ dfjaPost: post.id }, '', `?post=${post.id}`);
+    fetch(`${config.ajaxUrl}?action=dfja_get_comments&post_id=${post.id}`);
   }
 
   function loadPosts() {
@@ -44,11 +44,11 @@
       .finally(() => { loading = false; });
   }
 
-  document.querySelectorAll('.dfnews-category').forEach((button) => button.addEventListener('click', () => {
-    document.querySelectorAll('.dfnews-category').forEach((item) => item.classList.remove('is-active'));
+  document.querySelectorAll('.dfja-category').forEach((button) => button.addEventListener('click', () => {
+    document.querySelectorAll('.dfja-category').forEach((item) => item.classList.remove('is-active'));
     button.classList.add('is-active'); category = Number(button.dataset.category || 0); page = 1; hasMore = true; list.innerHTML = ''; loadPosts();
   }));
-  document.querySelector('.dfnews-modal-close').addEventListener('click', () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); history.back(); });
+  document.querySelector('.dfja-modal-close').addEventListener('click', () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); history.back(); });
   list.addEventListener('scroll', () => { if (list.scrollTop + list.clientHeight >= list.scrollHeight - 500) loadPosts(); });
   loadPosts();
 })();

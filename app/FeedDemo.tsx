@@ -15,7 +15,7 @@ export default function FeedDemo({ stories }: { stories: Array<{ category: strin
     <aside className="breaking-bar"><strong>🔥 Acompanhe agora em tempo real:</strong><span>Brasília e Entorno em destaque</span><span>Serviços e oportunidades</span><span>Segurança e mobilidade</span></aside>
     <section className="feed" aria-label="Feed de notícias">
       {visible.length ? visible.map((story, index) => <article key={story.title} className={`story ${story.tone}`} style={story.image_url ? { backgroundImage: `url(${story.image_url})` } : undefined}>
-        <div className="story-overlay" /><div className="story-content"><div className="story-meta"><span>{story.category}</span><span>{story.source_name || "DFJA agora"}</span></div><h1>{story.title}</h1><p>{story.excerpt}</p><div className="story-footer"><span>DFNews</span><span>{String(index + 1).padStart(2, "0")}</span></div></div>
+        <div className="story-overlay" /><div className="story-content"><div className="story-meta"><span>{story.category}</span><span>{story.source_name || "DFJA agora"}</span></div><h1>{story.title}</h1><p>{story.excerpt}</p><div className="story-footer"><span>DFJá</span><span>{String(index + 1).padStart(2, "0")}</span></div></div>
       </article>) : <div className="empty-feed">Nenhuma notícia nesta categoria ainda.</div>}
     </section>
   </>;

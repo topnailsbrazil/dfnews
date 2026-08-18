@@ -48,8 +48,8 @@ export default function AdminPanel() {
 
   if (!session) return (
     <main className="admin-shell"><section className="admin-card">
-      <div className="brand-mark">DF<span>NEWS</span></div><h1>Área editorial</h1>
-      <p>Entre para publicar no DFNews.</p>
+      <div className="brand-mark">DF<span>JÁ</span></div><h1>Área editorial</h1>
+      <p>Entre para publicar no DFJá.</p>
       <form onSubmit={login} className="admin-form">
         <input type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Sua senha Supabase" value={password} onChange={(e) => setPassword(e.target.value)} required />
@@ -59,7 +59,7 @@ export default function AdminPanel() {
   );
 
   return <main className="admin-shell"><section className="admin-card wide">
-    <div className="admin-heading"><div><div className="brand-mark">DF<span>NEWS</span></div><h1>Novo artigo</h1></div><a href="/">Ver feed</a></div>
+    <div className="admin-heading"><div><div className="brand-mark">DF<span>JÁ</span></div><h1>Novo artigo</h1></div><a href="/">Ver feed</a></div>
     <form onSubmit={publish} className="admin-form">
       <input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
       <input placeholder="Resumo curto" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />

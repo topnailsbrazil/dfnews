@@ -3,7 +3,7 @@
 if (!defined('ABSPATH')) exit;
 
 add_action('init', function () {
-    register_post_meta('post', 'dfnews_video_url', [
+    register_post_meta('post', 'dfja_video_url', [
         'type' => 'string',
         'single' => true,
         'show_in_rest' => true,
