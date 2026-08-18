@@ -26,7 +26,7 @@ const demoStories = [
     image_url: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=80",
   },
   { category: "Fato ou Fake", title: "DFJÁ explica: como conferir uma informação antes de compartilhar", excerpt: "Veja sinais de alerta e fontes oficiais para verificar conteúdos que circulam nas redes sociais.", tone: "tone-green", image_url: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1600&q=80" },
-  { category: "Tecnologia", title: "Serviços digitais ganham espaço na rotina dos moradores do DF", excerpt: "Aplicativos e plataformas públicas ajudam a resolver demandas sem deslocamento.", tone: "tone-cyan", image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80" },
+  { category: "Tecnologia", title: "Serviços digitais ganham espaço na rotina dos moradores do DF", excerpt: "Aplicativos e plataformas públicas ajudam a resolver demandas sem deslocamento.", tone: "tone-cyan", image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80", video_url: "demo", instagram_url: "demo" },
   { category: "Concursos", title: "Concursos e seleções movimentam oportunidades no Distrito Federal", excerpt: "Acompanhe editais, inscrições, prazos e informações confirmadas pelos órgãos responsáveis.", tone: "tone-orange", image_url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1600&q=80" },
   { category: "Emprego e Concursos", title: "Feiras e vagas aproximam candidatos de empresas no DF e Entorno", excerpt: "Confira oportunidades e orientações para participar dos processos seletivos.", tone: "tone-purple", image_url: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1600&q=80" },
   { category: "Policial", title: "Segurança no DF: acompanhe as ocorrências confirmadas", excerpt: "Informações verificadas pelas autoridades, com contexto e serviço para a população.", tone: "tone-blue", image_url: "https://images.unsplash.com/photo-1453873531674-2151bcd01707?auto=format&fit=crop&w=1600&q=80" },
@@ -60,6 +60,8 @@ export default async function Home() {
         tone: "tone-blue",
         image_url: article.image_url,
         source_name: article.source_name,
+        video_url: null,
+        instagram_url: null,
       }));
   const stories = [...publishedStories, ...demoStories];
 

@@ -70,9 +70,23 @@ button { font: inherit; }
 .video-placeholder { align-items: center; background: #101a28; border-radius: 14px; color: #fff; display: flex; flex-direction: column; gap: 6px; margin: 22px 0; padding: 34px 18px; text-align: center; }
 .video-placeholder span { align-items: center; background: #55d6be; border-radius: 50%; color: #06221e; display: flex; font-size: 20px; height: 48px; justify-content: center; width: 48px; }
 .video-placeholder small { color: #aebdca; }
+.video-controls { align-items: center; display: flex; gap: 8px; width: 100%; }
+.video-controls i { background: #55d6be; border-radius: 4px; display: block; height: 4px; width: 72%; }
+.video-controls em { color: #aebdca; font-size: 11px; font-style: normal; }
 .reader-comments { border-top: 1px solid #d6e0e7; display: grid; gap: 9px; margin-top: 22px; padding-top: 18px; }
 .reader-comments textarea { border: 1px solid #cbd7df; border-radius: 10px; min-height: 72px; padding: 10px; resize: vertical; }
 .reader-comments button { background: #147d6e; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-weight: 700; padding: 11px; }
+.first-comment { color: #708392; font-size: 13px; }
+.comment-footer { align-items: center; display: flex; justify-content: space-between; }
+.comment-footer small { color: #708392; }
+.instagram-placeholder { background: #fff; border: 1px solid #d6e0e7; border-radius: 14px; margin: 24px 0; overflow: hidden; padding: 14px; }
+.instagram-head { align-items: center; display: flex; gap: 9px; }
+.instagram-head small { margin-left: auto; }
+.instagram-avatar { align-items: center; background: #f0f5f7; border: 1px solid #d6e0e7; border-radius: 50%; color: #087b72; display: flex; font-size: 9px; font-weight: 800; height: 32px; justify-content: center; width: 32px; }
+.instagram-media { align-items: center; background: linear-gradient(135deg,#d9e9e6,#647f89); color: #fff; display: flex; flex-direction: column; gap: 6px; justify-content: center; margin: 12px 0; min-height: 190px; text-align: center; }
+.instagram-media span { font-size: 40px; }.instagram-media small { color: #eef7f6; }
+.instagram-actions { display: flex; font-size: 23px; gap: 14px; }.instagram-actions span:last-child { margin-left: auto; }
+.instagram-likes { display: block; font-size: 12px; margin-top: 8px; }.instagram-placeholder a { color: #147d6e; display: block; font-size: 13px; margin-top: 10px; text-decoration: none; }
 .empty-feed { align-items: center; display: flex; height: 100dvh; justify-content: center; padding: 32px; text-align: center; }
 .institutional-slot { align-items: center; background: linear-gradient(135deg, #d9f5ef, #f6fbfa); color: #0c4a43; display: flex; flex-direction: column; gap: 8px; justify-content: center; min-height: 180px; padding: 28px; scroll-snap-align: start; text-align: center; }
 .institutional-slot small { font-size: 10px; font-weight: 800; letter-spacing: .16em; }
