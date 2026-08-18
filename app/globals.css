@@ -40,8 +40,8 @@ button { font: inherit; }
 .story-meta span:first-child { color: var(--accent); font-weight: 700; }
 .story-avatar { align-items: center; background: #fff; border: 3px solid rgba(255,255,255,.85); border-radius: 50%; color: #0b6f66; display: flex; font-size: 9px; font-weight: 900; height: 55px; justify-content: center; letter-spacing: -.08em; margin-bottom: 2px; width: 55px; }
 .story-avatar span { color: #f23b72; font-size: 8px; }
-.story h1 { font-size: clamp(32px, 8vw, 68px); letter-spacing: -.04em; line-height: .98; margin: 14px 0; max-width: 760px; }
-.story p { color: #d9e1ea; font-size: clamp(16px, 2.4vw, 21px); line-height: 1.45; margin: 0 0 30px; max-width: 660px; }
+.story h1 { font-size: clamp(24px, 5.8vw, 48px); letter-spacing: -.035em; line-height: 1.04; margin: 12px 0; max-width: 620px; }
+.story p { color: #d9e1ea; font-size: clamp(15px, 2vw, 18px); line-height: 1.4; margin: 0 0 22px; max-width: 560px; }
 .story-hint { color: #fff; font-size: 12px; font-weight: 700; margin-bottom: 18px; text-align: center; }
 .story-footer { border-top: 1px solid rgba(255,255,255,.2); padding-top: 14px; }
 .social-rail { bottom: 110px; display: grid; gap: 13px; position: absolute; right: 14px; z-index: 3; }
