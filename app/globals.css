@@ -14,15 +14,15 @@ button { font: inherit; }
 .device-stage { align-items: center; display: flex; justify-content: center; min-height: 100dvh; padding: 0; }
 .phone-frame { background: #101116; border: 1px solid #343640; border-radius: 34px; box-shadow: 0 0 0 8px #050507, 0 24px 80px rgba(0,0,0,.65); height: min(920px, 100dvh); overflow: hidden; position: relative; width: min(520px, 100vw); }
 .phone-screen { height: 100%; overflow: hidden; position: relative; }
-.topbar { align-items: center; display: flex; justify-content: space-between; left: 0; padding: 18px 24px; position: fixed; right: 0; top: 0; z-index: 10; }
+.topbar { align-items: center; display: flex; justify-content: space-between; left: 50%; max-width: 520px; padding: 18px 24px; position: absolute; top: 0; transform: translateX(-50%); width: min(520px, 100vw); z-index: 10; }
 .brand-mark { color: var(--accent); font-size: 24px; font-weight: 900; letter-spacing: -1px; }
 .brand-mark span { color: white; font-weight: 500; margin-left: 4px; }
 .topbar-note { color: var(--muted); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
-.category-bar { display: flex; gap: 8px; overflow-x: auto; padding: 76px 20px 12px; position: fixed; scrollbar-width: none; top: 0; width: 100%; z-index: 9; }
+.category-bar { display: flex; gap: 8px; overflow-x: auto; padding: 76px 20px 12px; position: absolute; scrollbar-width: none; top: 0; width: 100%; z-index: 9; }
 .category-bar::-webkit-scrollbar { display: none; }
 .category { background: rgba(7, 17, 31, .58); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: var(--muted); cursor: pointer; padding: 8px 13px; white-space: nowrap; }
 .category.active { background: var(--accent); border-color: var(--accent); color: #06221e; font-weight: 700; }
-.breaking-bar { align-items: center; background: rgba(4, 11, 20, .9); border-bottom: 1px solid rgba(255,255,255,.12); color: var(--muted); display: flex; gap: 18px; left: 0; overflow-x: auto; padding: 10px 20px; position: fixed; right: 0; top: 126px; white-space: nowrap; z-index: 8; }
+.breaking-bar { align-items: center; background: rgba(4, 11, 20, .9); border-bottom: 1px solid rgba(255,255,255,.12); color: var(--muted); display: flex; gap: 18px; left: 0; overflow-x: auto; padding: 10px 20px; position: absolute; right: 0; top: 126px; white-space: nowrap; z-index: 8; }
 .breaking-bar strong { color: #fff; font-size: 12px; }
 .breaking-bar span { font-size: 12px; }
 .feed { height: 100dvh; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
@@ -94,8 +94,8 @@ button { font: inherit; }
 .institutional-slot span { color: #39786f; font-size: 13px; }
 
 @media (min-width: 768px) {
-  .topbar { padding: 24px 48px; }
-  .category-bar { justify-content: center; padding-top: 84px; }
+  .topbar { padding: 24px; }
+  .category-bar { justify-content: flex-start; padding-top: 76px; }
   .story { margin: 0 auto; max-width: 1120px; padding-left: 40px; padding-right: 86px; }
 }
 
