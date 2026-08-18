@@ -19,7 +19,7 @@
     const excerpt = post.excerpt?.rendered?.replace(/<[^>]+>/g, '').slice(0, 180) || '';
     const card = document.createElement('article');
     card.className = 'dfja-card';
-    card.innerHTML = `${image ? `<img class="dfja-card-image" src="${escapeHtml(image)}" alt="">` : ''}<div class="dfja-card-shade"></div><div class="dfja-card-content"><span class="dfja-card-meta">DFJá</span><h2>${escapeHtml(post.title?.rendered)}</h2><p>${escapeHtml(excerpt)}</p><button class="dfja-read" type="button">Ler notícia</button></div>`;
+    card.innerHTML = `${image ? `<img class="dfja-card-image" src="${escapeHtml(image)}" alt="">` : ''}<div class="dfja-card-shade"></div><div class="dfja-card-content"><span class="dfja-card-meta">DFJÁ</span><h2>${escapeHtml(post.title?.rendered)}</h2><p>${escapeHtml(excerpt)}</p><button class="dfja-read" type="button">Ler notícia</button></div>`;
     card.querySelector('.dfja-read').addEventListener('click', () => openPost(post));
     return card;
   }

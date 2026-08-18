@@ -49,7 +49,7 @@ export default function AdminPanel() {
   if (!session) return (
     <main className="admin-shell"><section className="admin-card">
       <div className="brand-mark">DF<span>JÁ</span></div><h1>Área editorial</h1>
-      <p>Entre para publicar no DFJá.</p>
+      <p>Entre para publicar no DFJÁ.</p>
       <form onSubmit={login} className="admin-form">
         <input type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input type="password" placeholder="Sua senha Supabase" value={password} onChange={(e) => setPassword(e.target.value)} required />

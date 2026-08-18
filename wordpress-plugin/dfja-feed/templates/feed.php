@@ -1,4 +1,4 @@
-<div id="dfja-feed" class="dfja-feed" aria-label="Feed de notícias DFJá">
+<div id="dfja-feed" class="dfja-feed" aria-label="Feed de notícias DFJÁ">
     <nav class="dfja-categories" aria-label="Categorias">
         <button class="dfja-category is-active" data-category="0" type="button">Para você</button>
         <?php foreach ((array) $categories as $category_id => $category_name): ?>

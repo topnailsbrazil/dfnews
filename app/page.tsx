@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 const demoStories = [
   {
     category: "Distrito Federal",
-    title: "DFJá está chegando com informação local em um novo formato",
+    title: "DFJÁ está chegando com informação local em um novo formato",
     excerpt: "Um feed rápido, visual e direto para acompanhar o que acontece no Distrito Federal e no Entorno.",
     tone: "tone-blue",
     image_url: "https://images.unsplash.com/photo-1585202900225-6d3ac20a6962?auto=format&fit=crop&w=1600&q=80",
@@ -25,7 +25,7 @@ const demoStories = [
     tone: "tone-purple",
     image_url: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1600&q=80",
   },
-  { category: "Fato ou Fake", title: "DFJA explica: como conferir uma informação antes de compartilhar", excerpt: "Veja sinais de alerta e fontes oficiais para verificar conteúdos que circulam nas redes sociais.", tone: "tone-green", image_url: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1600&q=80" },
+  { category: "Fato ou Fake", title: "DFJÁ explica: como conferir uma informação antes de compartilhar", excerpt: "Veja sinais de alerta e fontes oficiais para verificar conteúdos que circulam nas redes sociais.", tone: "tone-green", image_url: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1600&q=80" },
   { category: "Tecnologia", title: "Serviços digitais ganham espaço na rotina dos moradores do DF", excerpt: "Aplicativos e plataformas públicas ajudam a resolver demandas sem deslocamento.", tone: "tone-cyan", image_url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80" },
   { category: "Concursos", title: "Concursos e seleções movimentam oportunidades no Distrito Federal", excerpt: "Acompanhe editais, inscrições, prazos e informações confirmadas pelos órgãos responsáveis.", tone: "tone-orange", image_url: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1600&q=80" },
   { category: "Emprego e Concursos", title: "Feiras e vagas aproximam candidatos de empresas no DF e Entorno", excerpt: "Confira oportunidades e orientações para participar dos processos seletivos.", tone: "tone-purple", image_url: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1600&q=80" },
@@ -45,7 +45,7 @@ function StoryCard({ story, index }: { story: { category: string; title: string;
         <div className="story-meta"><span>{story.category}</span><span>{story.source_name || "Agora"}</span></div>
         <h1>{story.title}</h1>
         <p>{story.excerpt}</p>
-        <div className="story-footer"><span>DFJá</span><span>{String(index + 1).padStart(2, "0")}</span></div>
+        <div className="story-footer"><span>DFJÁ</span><span>{String(index + 1).padStart(2, "0")}</span></div>
       </div>
     </article>
   );
@@ -54,7 +54,7 @@ function StoryCard({ story, index }: { story: { category: string; title: string;
 export default async function Home() {
   const articles = await getPublishedArticles();
   const publishedStories = articles.map((article: Article) => ({
-        category: article.category?.[0]?.name || "DFJá",
+        category: article.category?.[0]?.name || "DFJÁ",
         title: article.title,
         excerpt: article.excerpt || article.content.slice(0, 180),
         tone: "tone-blue",
@@ -66,7 +66,7 @@ export default async function Home() {
   return (
     <main className="feed-shell">
       <header className="topbar">
-        <div className="brand-mark" aria-label="DFJá">DF<span>JÁ</span></div>
+        <div className="brand-mark" aria-label="DFJÁ">DF<span>JÁ</span></div>
         <div className="topbar-note">Distrito Federal & Entorno</div>
       </header>
 

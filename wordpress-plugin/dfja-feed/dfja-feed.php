@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: DFJá Feed
+ * Plugin Name: DFJÁ Feed
  * Description: Feed vertical mobile-first para notícias do Distrito Federal e Entorno.
  * Version: 0.1.0
- * Author: DFJá
+ * Author: DFJÁ
  */
 
 if (!defined('ABSPATH')) exit;
