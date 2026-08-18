@@ -38,7 +38,7 @@ button { font: inherit; }
 .story-content { align-self: end; max-width: 720px; width: 100%; }
 .story-meta, .story-footer { color: var(--muted); display: flex; font-size: 12px; justify-content: space-between; letter-spacing: .05em; text-transform: uppercase; }
 .story-meta span:first-child { color: var(--accent); font-weight: 700; }
-.story-avatar { align-items: center; background: #fff; border: 3px solid rgba(255,255,255,.85); border-radius: 50%; color: #0b6f66; display: flex; font-size: 9px; font-weight: 900; height: 42px; justify-content: center; letter-spacing: -.08em; margin: 18px 0 10px; width: 42px; }
+.story-avatar { align-items: center; background: #fff; border: 3px solid rgba(255,255,255,.85); border-radius: 50%; color: #0b6f66; display: flex; font-size: 9px; font-weight: 900; height: 55px; justify-content: center; letter-spacing: -.08em; margin-bottom: 2px; width: 55px; }
 .story-avatar span { color: #f23b72; font-size: 8px; }
 .story h1 { font-size: clamp(32px, 8vw, 68px); letter-spacing: -.04em; line-height: .98; margin: 14px 0; max-width: 760px; }
 .story p { color: #d9e1ea; font-size: clamp(16px, 2.4vw, 21px); line-height: 1.45; margin: 0 0 30px; max-width: 660px; }
