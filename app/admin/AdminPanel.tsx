@@ -1,73 +1,27 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Category = { id: string; name: string };
+type EditorialStatus = "coletada" | "enviada_whatsapp" | "aprovada_para_ia" | "reescrita_ia" | "em_revisao_pwa" | "pronta_para_publicacao" | "publicada" | "rejeitada" | "devolvida_para_revisao" | "erro_publicacao";
+type Article = { id: string; title: string; excerpt: string | null; content: string; image_url: string | null; image_credit: string | null; source_name: string | null; source_url: string | null; category_id: string | null; author: string | null; tags: string[] | null; editorial_status: EditorialStatus; wordpress_url: string | null; last_error: string | null; version: number; updated_at: string };
+const labels: Record<EditorialStatus, string> = { coletada: "Coletada", enviada_whatsapp: "Enviada ao WhatsApp", aprovada_para_ia: "Aprovada para IA", reescrita_ia: "Reescrita pela IA", em_revisao_pwa: "Em revisão", pronta_para_publicacao: "Pronta para publicar", publicada: "Publicada", rejeitada: "Rejeitada", devolvida_para_revisao: "Devolvida", erro_publicacao: "Erro de publicação" };
+const fields = "id,title,excerpt,content,image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,last_error,version,updated_at";
 
 export default function AdminPanel() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [session, setSession] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [title, setTitle] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [content, setContent] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [sourceName, setSourceName] = useState("");
-  const [status, setStatus] = useState("");
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(Boolean(data.session)));
-    supabase.from("categories").select("id,name").order("name").then(({ data }) => setCategories(data || []));
-  }, []);
-
-  async function login(event: FormEvent) {
-    event.preventDefault();
-    setStatus("Entrando...");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return setStatus(error.message);
-    setSession(true);
-    setStatus("");
-  }
-
-  async function publish(event: FormEvent) {
-    event.preventDefault();
-    setStatus("Publicando...");
-    const slug = `${title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now()}`;
-    const { error } = await supabase.from("articles").insert({
-      title, slug, excerpt, content, category_id: categoryId || null,
-      source_url: sourceUrl || null, source_name: sourceName || null,
-      status: "published", published_at: new Date().toISOString(),
-    });
-    if (error) return setStatus(error.message);
-    setTitle(""); setExcerpt(""); setContent(""); setSourceUrl(""); setSourceName("");
-    setStatus("Artigo publicado com sucesso.");
-  }
-
-  if (!session) return (
-    <main className="admin-shell"><section className="admin-card">
-      <div className="brand-mark">DF<span>JÁ</span></div><h1>Área editorial</h1>
-      <p>Entre para publicar no DFJÁ.</p>
-      <form onSubmit={login} className="admin-form">
-        <input type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Sua senha Supabase" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit">Entrar</button>
-      </form>{status && <p className="admin-status">{status}</p>}
-    </section></main>
-  );
-
-  return <main className="admin-shell"><section className="admin-card wide">
-    <div className="admin-heading"><div><div className="brand-mark">DF<span>JÁ</span></div><h1>Novo artigo</h1></div><a href="/">Ver feed</a></div>
-    <form onSubmit={publish} className="admin-form">
-      <input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      <input placeholder="Resumo curto" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
-      <textarea placeholder="Texto da notícia" value={content} onChange={(e) => setContent(e.target.value)} rows={10} required />
-      <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}><option value="">Categoria</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
-      <input placeholder="Nome da fonte (opcional)" value={sourceName} onChange={(e) => setSourceName(e.target.value)} />
-      <input type="url" placeholder="URL da fonte (opcional)" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
-      <button type="submit">Publicar artigo</button>
-    </form>{status && <p className="admin-status">{status}</p>}
-  </section></main>;
+  const [session, setSession] = useState<{ access_token: string; user_id: string } | null>(null);
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [articles, setArticles] = useState<Article[]>([]); const [categories, setCategories] = useState<Category[]>([]); const [draft, setDraft] = useState<Article | null>(null); const [query, setQuery] = useState(""); const [message, setMessage] = useState(""); const [saving, setSaving] = useState(false); const [publishing, setPublishing] = useState(false);
+  useEffect(() => { supabase.auth.getSession().then(({ data }) => data.session && setSession({ access_token: data.session.access_token, user_id: data.session.user.id })); const listener = supabase.auth.onAuthStateChange((_event, next) => setSession(next ? { access_token: next.access_token, user_id: next.user.id } : null)); return () => listener.data.subscription.unsubscribe(); }, []);
+  async function load() { const [a, c] = await Promise.all([supabase.from("articles").select(fields).not("editorial_status", "in", "(publicada,rejeitada)").order("updated_at", { ascending: false }).limit(200), fetch("/api/categories").then((r) => r.ok ? r.json() : [])]); if (a.error) setMessage(a.error.message); else setArticles((a.data || []) as Article[]); setCategories(Array.isArray(c) ? c : []); }
+  useEffect(() => { if (session) load(); }, [session]);
+  const filtered = useMemo(() => articles.filter((a) => `${a.title} ${a.source_name || ""} ${a.id} ${a.editorial_status}`.toLowerCase().includes(query.toLowerCase())), [articles, query]);
+  async function select(article: Article) { const claim = await supabase.rpc("claim_article", { p_article_id: article.id }); if (claim.error || claim.data !== true) { setMessage("Esta matéria está sendo editada por outro aprovador."); return; } const next = ["coletada", "enviada_whatsapp", "reescrita_ia"].includes(article.editorial_status) ? "em_revisao_pwa" : article.editorial_status; setDraft({ ...article, editorial_status: next }); setMessage("Matéria reservada para esta sessão."); }
+  function update(field: keyof Article, value: string | string[]) { setDraft((current) => current ? { ...current, [field]: value } : current); }
+  useEffect(() => { if (!draft || !session) return; const timer = window.setTimeout(async () => { setSaving(true); const snapshot = { ...draft }; const update = { title: draft.title, excerpt: draft.excerpt, content: draft.content, image_url: draft.image_url, image_credit: draft.image_credit, source_name: draft.source_name, source_url: draft.source_url, category_id: draft.category_id, author: draft.author, tags: draft.tags || [], editorial_status: draft.editorial_status, updated_at: new Date().toISOString(), version: draft.version + 1 }; const result = await supabase.from("articles").update(update).eq("id", draft.id).eq("version", draft.version).select(fields).single(); if (result.error || !result.data) setMessage(`Autosave falhou: ${result.error?.message || "conflito de versão; recarregue a matéria"}`); else { await supabase.from("article_revisions").insert({ article_id: draft.id, changed_by: session.user_id, snapshot }); setDraft(result.data as Article); } setSaving(false); }, 900); return () => window.clearTimeout(timer); }, [draft?.title, draft?.excerpt, draft?.content, draft?.image_url, draft?.image_credit, draft?.source_name, draft?.source_url, draft?.category_id, draft?.author, draft?.tags?.join("|"), draft?.editorial_status]);
+  async function login(event: FormEvent) { event.preventDefault(); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setMessage(error.message); }
+  async function upload(event: ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (!file || !draft) return; const path = `${draft.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`; const result = await supabase.storage.from("editorial-media").upload(path, file, { contentType: file.type }); if (result.error) { setMessage(`Bucket editorial-media ausente: ${result.error.message}`); return; } update("image_url", supabase.storage.from("editorial-media").getPublicUrl(path).data.publicUrl); setMessage("Imagem carregada; será enviada como destaque ao publicar."); }
+  async function publish(status: "publish" | "draft") { if (!draft || !session || !window.confirm(status === "draft" ? "Enviar esta matéria como rascunho ao WordPress?" : "Publicar esta matéria diretamente no WordPress?")) return; setPublishing(true); setMessage("Enviando imagem de destaque e matéria…"); const response = await fetch(`/api/articles/${draft.id}/publish`, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" }, body: JSON.stringify({ status }) }); const data = await response.json(); if (!response.ok) setMessage(data.error || "Falha de publicação."); else { setMessage(`${status === "draft" ? "Rascunho enviado" : "Publicado"}: ${data.url || "WordPress"}`); if (status === "publish") setArticles((current) => current.filter((a) => a.id !== draft.id)); setDraft({ ...draft, editorial_status: status === "publish" ? "publicada" : "pronta_para_publicacao", wordpress_url: data.url }); } setPublishing(false); }
+  if (!session) return <main className="admin-shell"><section className="admin-card"><div className="brand-mark">DF<span>JÁ</span></div><h1>Central Editorial</h1><p>Entre para revisar e publicar matérias.</p><form onSubmit={login} className="admin-form"><input type="email" placeholder="Seu e-mail" value={email} onChange={(e) => setEmail(e.target.value)} required /><input type="password" placeholder="Sua senha" value={password} onChange={(e) => setPassword(e.target.value)} required /><button type="submit">Entrar</button></form>{message && <p className="admin-status">{message}</p>}</section></main>;
+  return <main className="admin-shell editorial-shell"><header className="editorial-header"><div><div className="brand-mark">DF<span>JÁ</span></div><h1>Central Editorial</h1><p>Revisão, imagem e publicação</p></div><nav><a href="/">Ver feed</a><button type="button" onClick={() => supabase.auth.signOut()}>Sair</button></nav></header><section className="editorial-layout"><aside className="queue-panel"><div className="queue-heading"><strong>Fila ({filtered.length})</strong><button type="button" onClick={load}>Atualizar</button></div><input className="queue-search" placeholder="Buscar título, fonte, ID ou status" value={query} onChange={(e) => setQuery(e.target.value)} /><div className="queue-list">{filtered.map((article) => <button className={`queue-item ${draft?.id === article.id ? "selected" : ""}`} key={article.id} type="button" onClick={() => select(article)}><strong>{article.title}</strong><span>{article.source_name || "Fonte não informada"}</span><em>{labels[article.editorial_status]}</em></button>)}{!filtered.length && <p className="empty-queue">Nenhuma matéria pendente.</p>}</div></aside><section className="editor-panel">{draft ? <><div className="editor-toolbar"><span className="status-pill">{labels[draft.editorial_status]}</span><small>{saving ? "Salvando…" : "Autosave ativo"}</small><button type="button" onClick={() => setDraft(null)}>Fechar</button></div><div className="editor-form"><label>Título<input value={draft.title} onChange={(e) => update("title", e.target.value)} /></label><div className="editor-grid"><label>Autor<input value={draft.author || ""} onChange={(e) => update("author", e.target.value)} /></label><label>Categoria<select value={draft.category_id || ""} onChange={(e) => update("category_id", e.target.value)}><option value="">Selecionar categoria</option>{categories.map((c) => <option value={c.id} key={c.id}>{c.name}</option>)}</select></label></div><label>Tags (separadas por vírgula)<input value={(draft.tags || []).join(", ")} onChange={(e) => update("tags", e.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))} /></label><label>Resumo<textarea rows={3} value={draft.excerpt || ""} onChange={(e) => update("excerpt", e.target.value)} /></label><label>Texto completo<textarea className="content-editor" rows={15} value={draft.content} onChange={(e) => update("content", e.target.value)} /></label><div className="editor-grid"><label>Fonte<input value={draft.source_name || ""} onChange={(e) => update("source_name", e.target.value)} /></label><label>URL da fonte<input type="url" value={draft.source_url || ""} onChange={(e) => update("source_url", e.target.value)} /></label></div><div className="image-editor"><label>URL da imagem<input type="url" value={draft.image_url || ""} onChange={(e) => update("image_url", e.target.value)} placeholder="https://..." /></label><label>Crédito<input value={draft.image_credit || ""} onChange={(e) => update("image_credit", e.target.value)} /></label><label className="upload-label">Enviar arquivo<input type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} /></label>{draft.image_url && <img src={draft.image_url} alt="Pré-visualização" />}</div><div className="editor-actions"><button type="button" className="secondary-action" onClick={() => update("editorial_status", "pronta_para_publicacao")}>Salvar para publicar</button><button type="button" className="secondary-action" disabled={publishing || !draft.title || !draft.content} onClick={() => publish("draft")}>Enviar rascunho WP</button><button type="button" className="primary-action" disabled={publishing || !draft.title || !draft.content} onClick={() => publish("publish")}>{publishing ? "Publicando…" : "Publicar no WordPress"}</button></div>{draft.last_error && <p className="error-banner">{draft.last_error}</p>}{message && <p className="admin-status">{message}</p>}</div></> : <div className="editor-empty"><h2>Selecione uma matéria</h2><p>As alterações são salvas automaticamente e a publicação exige confirmação.</p></div>}</section></section></main>;
 }

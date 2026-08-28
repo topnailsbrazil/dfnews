@@ -1,0 +1,15 @@
+{
+  "name": "DFJÁ — Editorial PWA V1",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    { "parameters": { "httpMethod": "POST", "path": "dfja-pwa-inbound", "responseMode": "responseNode", "options": {} }, "id": "pwa-inbound", "name": "Webhook PWA — Recebe matéria", "type": "n8n-nodes-base.webhook", "typeVersion": 2.1, "position": [260, 180], "webhookId": "dfja-pwa-inbound" },
+    { "parameters": { "jsCode": "const body = $json.body || $json;\nif (!body.n8n_item_id || !body.title || !body.content) throw new Error('n8n_item_id, title e content são obrigatórios');\nreturn [{ json: { ...body, editorial_status: 'em_revisao_pwa', received_at: new Date().toISOString() } }];" }, "id": "pwa-normalize", "name": "PWA — Valida matéria", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [520, 180] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true, received: true, n8n_item_id: $json.n8n_item_id, editorial_status: $json.editorial_status }) }}", "options": {} }, "id": "pwa-inbound-response", "name": "PWA — Confirma recebimento", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [780, 180] },
+    { "parameters": { "httpMethod": "POST", "path": "dfja-pwa-result", "responseMode": "responseNode", "options": {} }, "id": "pwa-result", "name": "Webhook PWA — Recebe resultado", "type": "n8n-nodes-base.webhook", "typeVersion": 2.1, "position": [260, 420], "webhookId": "dfja-pwa-result" },
+    { "parameters": { "jsCode": "const body = $json.body || $json;\nif (!body.article_id || !body.status) throw new Error('article_id e status são obrigatórios');\nreturn [{ json: { ...body, received_at: new Date().toISOString() } }];" }, "id": "pwa-result-normalize", "name": "PWA — Valida resultado", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [520, 420] },
+    { "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify({ ok: true, received: true, article_id: $json.article_id, status: $json.status }) }}", "options": {} }, "id": "pwa-result-response", "name": "PWA — Confirma resultado", "type": "n8n-nodes-base.respondToWebhook", "typeVersion": 1.1, "position": [780, 420] }
+  ],
+  "connections": { "Webhook PWA — Recebe matéria": { "main": [[{ "node": "PWA — Valida matéria", "type": "main", "index": 0 }]] }, "PWA — Valida matéria": { "main": [[{ "node": "PWA — Confirma recebimento", "type": "main", "index": 0 }]] }, "Webhook PWA — Recebe resultado": { "main": [[{ "node": "PWA — Valida resultado", "type": "main", "index": 0 }]] }, "PWA — Valida resultado": { "main": [[{ "node": "PWA — Confirma resultado", "type": "main", "index": 0 }]] } },
+  "pinData": {}, "versionId": "dfja-pwa-v1", "meta": { "templateCredsSetupCompleted": false }, "tags": []
+}
