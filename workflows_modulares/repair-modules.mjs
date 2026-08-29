@@ -27,7 +27,12 @@ const metropoles = cMap.get('RSS Metrópoles — Notícias');
 if (metropoles) metropoles.parameters = { ...metropoles.parameters, url: 'https://www.metropoles.com/feed' };
 const mount = clone('Monta Registro Pendente — Notícias', { name: 'Monta Registro de Fila', id: 'dfja01-mount', position: [1000, 0] });
 const prepare = cMap.get('Prepara Registro para Planilha — Notícias');
-if (prepare) prepare.name = 'Prepara Registro para Planilha';
+if (prepare) {
+  prepare.name = 'Prepara Registro para Planilha';
+  // The legacy source contained one extra closing brace in this Code node.
+  // Normalize it here so every generated collector is executable.
+  if (prepare.parameters?.jsCode) prepare.parameters.jsCode = prepare.parameters.jsCode.replace('story_id:clip(j.story_id||j.id,240)}}};}).filter', 'story_id:clip(j.story_id||j.id,240)}};}).filter');
+}
 const save = cMap.get('Salva Pendente — Notícias');
 if (save) save.credentials = credSheets;
 const audit = cMap.get('Audita entrada');
