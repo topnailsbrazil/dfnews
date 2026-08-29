@@ -63,7 +63,7 @@ for (const [name, value] of Object.entries(collection.connections)) {
 c1['Schedule Trigger'].main[0] = c1['Schedule Trigger'].main[0].filter((item) => cMap.has(item.node));
 c1['Filtra Duplicadas — Notícias'] = { main: [[{ node: 'Monta Registro de Fila', type: 'main', index: 0 }]] };
 c1['Monta Registro de Fila'] = { main: [[{ node: 'Prepara Registro para Planilha', type: 'main', index: 0 }]] };
-delete c1['Salva Pendente — Notícias'];
+if (save) c1['Prepara Registro para Planilha'] = { main: [[{ node: 'Salva Pendente — Notícias', type: 'main', index: 0 }]] };
 const newFeedNames = newFeeds.map(([name]) => name);
 c1['Agrega RSS 13 — DFJÁ'] = { main: [[{ node: 'Junta RSS novos 1', type: 'main', index: 0 }]] };
 c1['Junta RSS novos 1'] = { main: [[{ node: 'Junta RSS novos 2', type: 'main', index: 0 }]] };

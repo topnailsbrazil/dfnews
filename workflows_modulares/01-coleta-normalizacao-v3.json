@@ -1058,6 +1058,17 @@
         ]
       ]
     },
+    "Salva Pendente — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Le Fila Antes do Lote — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Audita entrada": {
       "main": [
         [
@@ -1074,6 +1085,17 @@
         [
           {
             "node": "Prepara Registro para Planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Registro para Planilha": {
+      "main": [
+        [
+          {
+            "node": "Salva Pendente — Notícias",
             "type": "main",
             "index": 0
           }
