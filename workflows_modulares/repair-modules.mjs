@@ -70,6 +70,13 @@ const w3nodes = [
   clone('Atualiza Sheet Refeita — Notícias', { name: 'Atualiza Fila após refazer', id: 'dfja03-refazer-save', position: [2080, 420], credentials: credSheets }),
   clone('Envia Nova Versão WhatsApp — Notícias', { name: 'Envia nova versão ao WhatsApp', id: 'dfja03-refazer-send', position: [2340, 420] })
 ];
+const approvalParser = w3nodes.find((node) => node.name === 'Interpreta comando do aprovador');
+if (approvalParser) {
+  approvalParser.parameters.jsCode = approvalParser.parameters.jsCode.replace(
+    "const ehAprovador = ['[REDACTED_PHONE]','[REDACTED_PHONE]','[REDACTED_PHONE]'].includes(telefone);",
+    "const csv = await this.helpers.httpRequest({ method: 'GET', url: 'https://docs.google.com/spreadsheets/d/1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc/gviz/tq?tqx=out:csv&sheet=Configuração' });\nconst cfg = {};\nfor (const line of String(csv).split(/\\r?\\n/).slice(1)) { const m = line.match(/^\\s*\"?([^,\\\"]+)\"?\\s*,\\s*\"?([^\\\"]*)\"?/); if (m) cfg[m[1].trim()] = m[2].trim(); }\nconst aprovadores = [cfg.aprovador_1, cfg.aprovador_2, cfg.aprovador_3].filter(Boolean).map((v) => String(v).replace(/\\D/g, ''));\nconst ehAprovador = aprovadores.includes(telefone.replace(/\\D/g, ''));"
+  );
+}
 const c3 = {
   'Webhook Aprovação WhatsApp': { main: [[{ node: 'Interpreta comando do aprovador', type: 'main', index: 0 }]] },
   'Interpreta comando do aprovador': { main: [[{ node: 'Valida comando e token', type: 'main', index: 0 }]] },
