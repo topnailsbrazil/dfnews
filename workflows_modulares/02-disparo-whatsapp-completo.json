@@ -49,15 +49,9 @@
       },
       "id": "le-fila-antes-do-lote-noticias",
       "name": "Le Fila Antes do Lote — Notícias",
-  "type": "n8n-nodes-base.googleSheets",
-  "typeVersion": 4.5,
-  "credentials": {
-    "googleSheetsOAuth2Api": {
-      "id": "RpYIQnWXiTrXaDJO",
-      "name": "Google Sheets account"
-    }
-  },
-  "position": [
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
         1700,
         650
       ],
@@ -103,8 +97,8 @@
             "approval_token": "={{ $json.approval_token || '' }}",
             "status": "aguardando_aprovacao",
             "sent_at": "={{ $json.sent_at || new Date().toISOString() }}",
-            "message_id": "={{ (()=>{const r=$json.whatsapp_response||{};return r?.key?.id||r?.data?.key?.id||r?.data?.id||r?.id||''})() }}",
-            "http_status": "200",
+            "message_id": "={{ (()=>{const r=$json.whatsapp_response||{};return r?.key?.id||r?.data?.key?.id||r?.data?.id||r?.id||(Array.isArray(r?.message_ids)?r.message_ids[0]:'')||''})() }}",
+            "http_status": "={{ $json.whatsapp_status === 'enviado' ? '200' : '500' }}",
             "erro": "={{ $json.whatsapp_erro || '' }}",
             "evento_ultimo": "envio_whatsapp",
             "agente_ultimo": "n8n:whatsapp",
@@ -408,12 +402,6 @@
       "name": "Grava Log — whatsapp",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "RpYIQnWXiTrXaDJO",
-          "name": "Google Sheets account"
-        }
-      },
       "position": [
         2200,
         700
