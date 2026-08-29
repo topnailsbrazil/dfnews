@@ -65,6 +65,7 @@ const w3nodes = [
     parameters: { method: 'POST', url: 'https://n8n.dfja.com.br/webhook/dfja-processamento-pwa-v2', sendHeaders: true, headerParameters: { parameters: [{ name: 'Content-Type', value: 'application/json' }] }, sendBody: true, specifyBody: 'json', jsonBody: '={{ JSON.stringify($json) }}', options: { timeout: 30000 } }
   },
   clone('Reescreve Novamente — Notícias', { name: 'Reescreve novamente sob comando', id: 'dfja03-refazer-ai', position: [1560, 420] }),
+  clone('OpenAI Chat Model Refazer — Notícias', { name: 'Modelo IA para refazer', id: 'dfja03-refazer-model', position: [1560, 650] }),
   clone('Monta Atualização Refeita — Notícias', { name: 'Monta nova versão', id: 'dfja03-refazer-monta', position: [1820, 420] }),
   clone('Atualiza Sheet Refeita — Notícias', { name: 'Atualiza Fila após refazer', id: 'dfja03-refazer-save', position: [2080, 420], credentials: credSheets }),
   clone('Envia Nova Versão WhatsApp — Notícias', { name: 'Envia nova versão ao WhatsApp', id: 'dfja03-refazer-send', position: [2340, 420] })
@@ -78,6 +79,7 @@ const c3 = {
   'Roteia decisão': { main: [[{ node: 'Envia matéria aprovada ao processamento', type: 'main', index: 0 }], [{ node: 'Marca rejeitada na Fila', type: 'main', index: 0 }], [{ node: 'Reescreve novamente sob comando', type: 'main', index: 0 }]] },
   'Marca rejeitada na Fila': { main: [[{ node: 'Confirma rejeição no WhatsApp', type: 'main', index: 0 }]] },
   'Reescreve novamente sob comando': { main: [[{ node: 'Monta nova versão', type: 'main', index: 0 }]] },
+  'Modelo IA para refazer': { ai_languageModel: [[{ node: 'Reescreve novamente sob comando', type: 'ai_languageModel', index: 0 }]] },
   'Monta nova versão': { main: [[{ node: 'Atualiza Fila após refazer', type: 'main', index: 0 }]] },
   'Atualiza Fila após refazer': { main: [[{ node: 'Envia nova versão ao WhatsApp', type: 'main', index: 0 }]] }
 };
@@ -90,14 +92,38 @@ const w4nodes = [
     parameters: { httpMethod: 'POST', path: 'dfja-processamento-pwa-v2', options: {} }
   },
   clone('Processa Matéria Aprovada — IA', { name: 'Reescreve matéria aprovada com IA', id: 'dfja04-ai', position: [300, 0] }),
-  clone('Normaliza Matéria Aprovada — IA', { name: 'Normaliza payload editorial', id: 'dfja04-normalize', position: [600, 0] }),
+  clone('OpenAI Chat Model — Notícias', { name: 'Modelo IA editorial', id: 'dfja04-model', position: [300, 500] }),
+  {
+    id: 'dfja04-normalize', name: 'Normaliza payload editorial', type: 'n8n-nodes-base.code', typeVersion: 2, position: [600, 0],
+    parameters: { mode: 'runOnceForAllItems', jsCode: `const input = $input.first()?.json || {};
+let parsed = {};
+try {
+  const fences = String.fromCharCode(96).repeat(3);
+  const raw = String(input.output || input.text || input.response || '').replace(new RegExp('^\\\\s*' + fences + 'json\\\\s*', 'i'), '').replace(new RegExp('\\\\s*' + fences + '\\\\s*$'), '').trim();
+  parsed = raw ? JSON.parse(raw) : {};
+} catch (_) {}
+const original = $('Webhook processamento aprovado').first()?.json || {};
+const pick = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim()) || '';
+return [{ json: {
+  ...original,
+  id: pick(original.id, original.story_id, original.n8n_item_id),
+  titulo: pick(parsed.titulo, parsed.title, original.titulo, original.title),
+  conteudo: pick(parsed.conteudo, parsed.content, original.conteudo, original.content, original.resumo),
+  resumo: pick(parsed.resumo, parsed.summary, original.resumo, original.excerpt),
+  categoria: pick(parsed.categoria, parsed.category, original.categoria, original.category, 'Brasil'),
+  imagem_url: pick(parsed.imagem_url, parsed.image_url, original.imagem_url, original.image_url),
+  link_original: pick(parsed.link, parsed.url, original.link_original, original.link, original.source_url),
+  fonte: pick(parsed.fonte, original.fonte, original.source_name),
+  processado_ia_em: new Date().toISOString()
+} }];` }
+  },
   {
     id: 'dfja04-pwa', name: 'Envia para PWA Editorial', type: 'n8n-nodes-base.httpRequest', typeVersion: 4.2, position: [900, 0],
     parameters: { method: 'POST', url: 'https://dfnews-ten.vercel.app/api/inbound', sendHeaders: true, headerParameters: { parameters: [{ name: 'Content-Type', value: 'application/json' }, { name: 'x-dfja-pwa-secret', value: '={{$env.N8N_PWA_INBOUND_SECRET}}' }] }, sendBody: true, specifyBody: 'json', jsonBody: '={{ JSON.stringify({ n8n_item_id: $json.id || $json.story_id, title: $json.titulo || $json.title, content: $json.conteudo || $json.content, excerpt: $json.resumo || $json.excerpt, image_url: $json.imagem_url || $json.image_url, image_credit: $json.image_credit || "", source_name: $json.fonte || $json.source_name, source_url: $json.link_original || $json.link || $json.source_url, author: $json.author || "Redação", tags: Array.isArray($json.tags) ? $json.tags : [], categoria: $json.categoria || $json.category || "Brasil" }) }}', options: { timeout: 30000 } }
   },
   clone('Atualiza Sheet Publicada — Notícias', { name: 'Marca enviada ao PWA na Fila', id: 'dfja04-sheet', position: [1200, 0], credentials: credSheets, parameters: { ...byName('Atualiza Sheet Publicada — Notícias').parameters, operation: 'update', columns: { ...byName('Atualiza Sheet Publicada — Notícias').parameters.columns, value: { id: "={{$('Normaliza payload editorial').first().json.id || $('Normaliza payload editorial').first().json.story_id}}", status: 'em_revisao_pwa', evento_ultimo: 'enviada_pwa', agente_ultimo: 'n8n:pwa', transicao_em: '={{new Date().toISOString()}}' }, matchingColumns: ['id'] } } })
 ];
-const c4 = { 'Webhook processamento aprovado': { main: [[{ node: 'Reescreve matéria aprovada com IA', type: 'main', index: 0 }]] }, 'Reescreve matéria aprovada com IA': { main: [[{ node: 'Normaliza payload editorial', type: 'main', index: 0 }]] }, 'Normaliza payload editorial': { main: [[{ node: 'Envia para PWA Editorial', type: 'main', index: 0 }]] }, 'Envia para PWA Editorial': { main: [[{ node: 'Marca enviada ao PWA na Fila', type: 'main', index: 0 }]] } };
+const c4 = { 'Webhook processamento aprovado': { main: [[{ node: 'Reescreve matéria aprovada com IA', type: 'main', index: 0 }]] }, 'Reescreve matéria aprovada com IA': { main: [[{ node: 'Normaliza payload editorial', type: 'main', index: 0 }]] }, 'Modelo IA editorial': { ai_languageModel: [[{ node: 'Reescreve matéria aprovada com IA', type: 'ai_languageModel', index: 0 }]] }, 'Normaliza payload editorial': { main: [[{ node: 'Envia para PWA Editorial', type: 'main', index: 0 }]] }, 'Envia para PWA Editorial': { main: [[{ node: 'Marca enviada ao PWA na Fila', type: 'main', index: 0 }]] } };
 out('04-processamento-editorial-pwa-v2.json', base('DFJÁ 04 — Processamento Editorial e PWA V2', w4nodes, c4));
 
 // 05: the PWA callback is the source of truth for the final state in the Sheet.
