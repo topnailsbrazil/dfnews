@@ -1,0 +1,988 @@
+{
+  "name": "DFJÁ 01 — Coleta e Normalização V3",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://agenciabrasil.ebc.com.br/rss.xml",
+        "options": {}
+      },
+      "id": "coleta-6f805a75-82d6-452d-9cc6-02466b8fbe7a",
+      "name": "RSS Agência Brasil — Notícias",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.cnnbrasil.com.br/feed/",
+        "options": {}
+      },
+      "id": "coleta-62dc51f3-87c1-478c-829d-3a19d57f722d",
+      "name": "RSS CNN Brasil — Notícias",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.metropoles.com/feed",
+        "options": {}
+      },
+      "id": "coleta-69171caa-8220-45c7-ac5e-4f23c6a136b4",
+      "name": "RSS Metrópoles — Notícias",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-3c3a724e-6b74-4709-9975-14a4ca464f63",
+      "name": "Junta Feeds 1 — Notícias",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1456,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-c457e632-ba1c-4e35-a763-37e258091bf7",
+      "name": "Junta Feeds 2 — Notícias",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1584,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-f4f2ddc2-0d09-4c6e-a342-5448a7099d6f",
+      "name": "Junta Feeds 3 — Notícias",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1936,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const all = $input.all();\n\nfunction repair(value) {\n  let s = String(value ?? '');\n  for (let i = 0; i < 2; i++) {\n    if (!/[ÃÂâ€šœž™�]/.test(s)) break;\n    try {\n      const fixed = Buffer.from(s, 'latin1').toString('utf8');\n      if (fixed === s || fixed.includes('�')) break;\n      s = fixed;\n    } catch (e) { break; }\n  }\n  return s.replace(/\\uFFFD/g, '').replace(/\\s+/g, ' ').trim();\n}\nfunction strip(value) { return repair(String(value ?? '').replace(/<!\\[CDATA\\[|\\]\\]>/g, '').replace(/<[^>]*>/g, ' ')); }\nfunction first(obj, keys) { for (const k of keys) { const v = k.split('.').reduce((a,p)=>a?.[p], obj); if (v !== undefined && v !== null && String(v).trim()) return v; } return ''; }\nfunction host(url) { try { return new URL(String(url)).hostname.replace(/^www\\./, ''); } catch (e) { return ''; } }\nfunction image(obj) { return first(obj, ['imagem_url','image_url','image','enclosure.url','enclosure.link','media.content.url','media.thumbnail.url']); }\nconst out=[]; const seen=new Set();\nconst now = Date.now();\nconst maxAgeMs = 24 * 60 * 60 * 1000;\nfunction publishedAt(obj) { return first(obj, ['isoDate','pubDate','published','date','date_published','published_at']); }\nfunction isFresh(value) {\n  const t = Date.parse(String(value || ''));\n  return Number.isFinite(t) && t <= now + 15 * 60 * 1000 && now - t <= maxAgeMs;\n}\nfor (const item of all) {\n  const n=item.json || {};\n  const link=String(first(n,['link','url','guid','id']));\n  const title=strip(first(n,['title','titulo','name']));\n  const body=strip(first(n,['content','content:encoded','contentSnippet','description','summary','text','texto']));\n  const published = publishedAt(n);\n  if (!isFresh(published)) continue;\n  const key=(link || title).toLowerCase().trim();\n  if (!key || seen.has(key)) continue;\n  seen.add(key);\n  out.push({json:{...n,title,titulo:title,link,url:link,link_original:link,fonte:strip(first(n,['fonte','source','creator'])) || host(link),source:host(link),content:body,conteudo_original:body,texto_original:body,description:body,summary:body,resumo_original:body,imagem_url:String(image(n) || ''),image_url:String(image(n) || ''),data_publicacao:published}});\n}\nreturn out;"
+      },
+      "id": "coleta-3a7d355b-7ae8-4807-b50a-1975f6df9f31",
+      "name": "Normaliza Itens — Notícias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const STOP = new Set(['a','o','e','de','da','do','das','dos','em','no','na','nos','nas','por','para','com','um','uma','que','se','ao','à','as','os','mais','sobre','após','entre','como','não','já','vai','foi','ser','são','é','the','and','for','with']);\nconst clean = (v) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g,' ').replace(/ +/g,' ').trim();\nconst tokens = (v) => new Set(clean(v).split(' ').filter(w => w.length > 2 && !STOP.has(w)));\nconst similarity = (a,b) => { if(!a.size || !b.size) return 0; let n=0; for(const w of a) if(b.has(w)) n++; return n/Math.min(a.size,b.size); };\nconst titleOf = (n) => String(n.titulo || n.title || n.titulo_original || n.name || '').trim();\nconst linkOf = (n) => String(n.link_original || n.link || n.url || n.guid || '').trim();\nconst seen = new Set(), stories = [], out = [];\nfor (const item of $input.all()) {\n  const n = item.json || {}, title = titleOf(n), link = linkOf(n);\n  const canonical = (link.match(/\\*https?:\\/\\/.+$/)?.[0]?.slice(1) || link).toLowerCase().replace(/[?#].*$/,'').replace(/\\/$/,'') || clean(title);\n  if (!canonical || seen.has(canonical)) continue;\n  const t = tokens(title), duplicate = stories.some(s => similarity(t, s.tokens) >= 0.92);\n  if (duplicate) continue;\n  seen.add(canonical); stories.push({tokens:t});\n  out.push({json:{...n,titulo:title,title,link_original:link,link,story_key:canonical.slice(0,240)}});\n}\nreturn out;"
+      },
+      "id": "coleta-b0f71531-a815-4429-87b6-f840ce688fc9",
+      "name": "Filtra Duplicadas — Notícias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2528,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "coleta-87bd44e7-f78d-4616-8271-4e4d8bc07423",
+      "name": "Salva Pendente — Notícias",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3584,
+        560
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        768
+      ],
+      "id": "coleta-1a9ab00c-480e-4920-b5ca-e8225f090222",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.politicadistrital.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        352
+      ],
+      "id": "coleta-d3aa2d46-4abd-49fd-97fe-d22374400809",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "url": "https://blogdocafezinho.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        496
+      ],
+      "id": "coleta-5ee7ede3-886d-486e-97fb-2e993e971fad",
+      "name": "RSS Read2"
+    },
+    {
+      "parameters": {
+        "url": "https://gpsbrasilia.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        -128
+      ],
+      "id": "coleta-84d1eb35-9c2f-4a74-b4fc-a1f2f234faf4",
+      "name": "RSS Read3"
+    },
+    {
+      "parameters": {
+        "url": "https://www.eldogomes.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        16
+      ],
+      "id": "coleta-30537c92-1f15-4613-8a99-e6a62b4b7d88",
+      "name": "RSS Read4"
+    },
+    {
+      "parameters": {
+        "url": "https://www.metropoles.com/colunas/grande-angular/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        -288
+      ],
+      "id": "coleta-459cad5a-ede0-4979-8c5c-f79d11472157",
+      "name": "RSS Read5"
+    },
+    {
+      "parameters": {
+        "url": "https://www.donnysilva.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        1200
+      ],
+      "id": "coleta-70456be4-7505-4b5c-bb26-0207c2780cab",
+      "name": "RSS Read6"
+    },
+    {
+      "parameters": {
+        "url": "https://www.correiobraziliense.com.br/euestudante/concursos/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        640
+      ],
+      "id": "coleta-d6b3ebf1-1105-4bc3-a600-b5b617287813",
+      "name": "RSS Read7"
+    },
+    {
+      "parameters": {
+        "url": "https://www.poder360.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        1520
+      ],
+      "id": "coleta-c7405d5b-73b7-467b-8e64-8f50f833534e",
+      "name": "RSS Read8"
+    },
+    {
+      "parameters": {
+        "url": "https://congressoemfoco.uol.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        1360
+      ],
+      "id": "coleta-18f019ea-dfaf-40ce-97d9-783b4ae67885",
+      "name": "RSS Read9"
+    },
+    {
+      "parameters": {
+        "url": "https://radiocorredor.com.br/feed.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        1680
+      ],
+      "id": "coleta-653a94aa-7f62-4dff-bb63-f874a3d52d25",
+      "name": "RSS Read10"
+    },
+    {
+      "parameters": {
+        "url": "https://blogdacris.com.br/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        1056
+      ],
+      "id": "coleta-02f7b989-eaa8-43d2-a493-0ef1aef92a29",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-6ae2fa65-0a89-4a79-934e-a1ddc6f33d84",
+      "name": "Agrega RSS 04 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1716,
+        320
+      ],
+      "webhookId": "f043707f-b808-44a0-843c-9f9f26617d79"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-f03f02dc-25ea-4834-b996-cbd1a67083f0",
+      "name": "Agrega RSS 05 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1716,
+        540
+      ],
+      "webhookId": "4ed549e5-dfae-4f22-a885-054306af7f84"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-2967953f-364f-4efc-9836-69c4f3202f7f",
+      "name": "Agrega RSS 06 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1716,
+        760
+      ],
+      "webhookId": "7830ec8b-cec3-47c6-b34a-755fc061ee54"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-e40f3fc7-191d-4b93-905a-623170811807",
+      "name": "Agrega RSS 07 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1976,
+        320
+      ],
+      "webhookId": "ddb816a9-9705-46d1-96c6-99787ba73f10"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-33129704-3716-4180-9fa3-5b88dccf83fe",
+      "name": "Agrega RSS 08 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1976,
+        540
+      ],
+      "webhookId": "94d38461-e73d-4f2c-bf7a-3e40ea35590f"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-7ae0edd9-fe74-41c5-8c37-ded035c9dc05",
+      "name": "Agrega RSS 09 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1976,
+        760
+      ],
+      "webhookId": "c71b7745-bdd9-4b73-85dd-c286c942c1d6"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-33e2f480-0075-4871-aaed-d22d4a2edbc4",
+      "name": "Agrega RSS 10 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2236,
+        320
+      ],
+      "webhookId": "27491e26-f363-4e2a-8a5c-d3a24fba963d"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-fec4f935-7cd1-4ba9-b440-df59d7957fdb",
+      "name": "Agrega RSS 11 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2236,
+        540
+      ],
+      "webhookId": "ce7dff94-88d2-478a-951b-7387b1fad54a"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-24f67d9c-0aa0-4182-8bbd-bdb1eb7579c3",
+      "name": "Agrega RSS 12 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2236,
+        760
+      ],
+      "webhookId": "83f962da-2ab0-4b64-b170-9bc60c447662"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "coleta-c0807664-1615-4928-9cb9-cad8e072fdb1",
+      "name": "Agrega RSS 13 — DFJÁ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2496,
+        320
+      ],
+      "webhookId": "2d0142ae-b2c6-47e4-ba8c-d91463fd35a9"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const csvResp = await this.helpers.httpRequest({ method: 'GET', url: 'https://docs.google.com/spreadsheets/d/1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc/gviz/tq?tqx=out:csv&sheet=Fontes', timeout: 10000, returnFullResponse: true, ignoreResponseCode: true });\nconst csv = typeof csvResp === 'string' ? csvResp : String(csvResp?.body ?? csvResp?.data ?? '');\nfunction csvRows(t) { const out=[]; for (const line of String(t).split(/\\r?\\n/)) { if (!line.trim()) continue; const a=[]; let c='',q=false; for(let i=0;i<line.length;i++){const ch=line[i]; if(ch==='\"'&&line[i+1]==='\"'&&q){c+='\"';i++;} else if(ch==='\"') q=!q; else if(ch===','&&!q){a.push(c.trim());c='';} else c+=ch;} a.push(c.trim());out.push(a);} const h=(out.shift()||[]).map(x=>x.toLowerCase().trim()); return out.map(r=>Object.fromEntries(h.map((k,i)=>[k,String(r[i]||'').trim()]))); }\nconst seenBase=new Set(); const sources=csvRows(csv).filter(s=>{const st=(s.status||'').toLowerCase(),u=(s.url||'').trim(),base=u.replace(/\\/$/,'').toLowerCase(); if(!/^https?:\\/\\//i.test(u)||(s.rss_url||'').trim()||st.includes('descart')||st.includes('não valid')||st.includes('inval')||st.includes('bloque')||seenBase.has(base)) return false; seenBase.add(base); return true;}).slice(0,20);\nconst clean=v=>String(v||'').replace(/<script[\\s\\S]*?<\\/script>|<style[\\s\\S]*?<\\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;|&#160;/gi,' ').replace(/&amp;/gi,'&').replace(/&quot;/gi,'\"').replace(/&#39;|&apos;/gi,\"'\").replace(/\\s+/g,' ').trim();\nconst abs=(h,b)=>{try{return new URL(h,b).href}catch(e){return ''}};\nconst publishedMeta=(h)=>{const patterns=[/<meta[^>]+(?:property|name)\\s*=\\s*[\"']article:published_time[\"'][^>]+content\\s*=\\s*[\"']([^\"']+)[\"']/i,/<meta[^>]+content\\s*=\\s*[\"']([^\"']+)[\"'][^>]+(?:property|name)\\s*=\\s*[\"']article:published_time[\"']/i,/<time[^>]+datetime\\s*=\\s*[\"']([^\"']+)[\"']/i,/<time[^>]*>([^<]+)<\\/time>/i]; for(const p of patterns){const m=String(h).match(p); if(m&&Number.isFinite(Date.parse(m[1]))) return new Date(m[1]).toISOString();} return '';};\nconst meta=(h)=>{const a=String(h).match(/<meta[^>]+(?:property|name)\\s*=\\s*[\"'](?:og:image|twitter:image)[\"'][^>]+content\\s*=\\s*[\"']([^\"']+)[\"']/i); if(a) return a[1].replace(/&amp;/g,'&').trim(); const b=String(h).match(/<meta[^>]+content\\s*=\\s*[\"']([^\"']+)[\"'][^>]+(?:property|name)\\s*=\\s*[\"'](?:og:image|twitter:image)[\"']/i); return b?b[1].replace(/&amp;/g,'&').trim():''};\nconst out=[];\nfor(const s of sources){let html='';try{const resp=await this.helpers.httpRequest({method:'GET',url:s.url,timeout:7000,headers:{'User-Agent':'Mozilla/5.0 (compatible; DFJA-NewsBot/1.0)'},returnFullResponse:true,ignoreResponseCode:true}); html=typeof resp==='string'?resp:String(resp?.body??resp?.data??'')}catch(e){continue} const img=meta(html); const published=publishedMeta(html); const re=/<a\\b[^>]*href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)<\\/a>/gi; const seen=new Set(); let m;\n  while((m=re.exec(html))&&seen.size<8){const href=abs(m[1],s.url),title=clean(m[2]); if(!href||title.length<25||title.length>220)continue; const u=new URL(href),b=new URL(s.url); if(u.hostname.replace(/^www\\./,'')!==b.hostname.replace(/^www\\./,'')||/login|entrar|busca|search|tag|autor|facebook|instagram|twitter|youtube|privacidade|termos/i.test(href))continue; if(u.pathname.split('/').filter(Boolean).length<2)continue; const key=href.toLowerCase().replace(/[?#].*$/,'').replace(/\\/$/,''); if(seen.has(key))continue; seen.add(key); out.push({json:{titulo:title,title,link:href,url:href,link_original:href,fonte:s.nome||s.url,source:s.nome||s.url,source_kind:'html',coleta_tipo:'html',content:'',description:'',summary:'',imagem_url:img,image_url:img,data_publicacao:published || '',fonte_catalogo_url:s.url}});}}\nreturn out;"
+      },
+      "id": "coleta-4762fb72-a8da-4a08-a59d-a6a19f5146d8",
+      "name": "Coleta Portais HTML — DFJÁ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        110,
+        980
+      ],
+      "webhookId": "8f026caf-e200-44ed-bda3-ffc27ecf9c77"
+    },
+    {
+      "id": "coleta-prepara-registro-planilha",
+      "name": "Prepara Registro para Planilha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const clip=(v,n)=>String(v??'').slice(0,n); const now=new Date().toISOString();\nlet existing=new Set(); try { const csv=await this.helpers.httpRequest({method:'GET',url:'https://docs.google.com/spreadsheets/d/1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc/gviz/tq?tqx=out:csv&sheet=Fila&tq=select%20P'}); existing=new Set(String(csv).split(/\\r?\\n/).slice(1).map(x=>x.replace(/^\\s*\"|\"\\s*$/g,'').trim().toLowerCase()).filter(Boolean)); } catch(e) {}\nreturn $input.all().filter(i=>String(i.json?.story_key||i.json?.link_original||i.json?.id||'').trim()).map(i=>{const j=i.json||{}; const key=clip(j.story_key||j.link_original||j.id,500).toLowerCase(); return {json:{...j, story_key:key, _already_in_fila:existing.has(key), status:j.status||'aguardando_moderacao', evento_ultimo:'entrada_fila', agente_ultimo:'n8n:coleta', estado_anterior:'analisada', data_entrada_fila:j.data_entrada_fila||now, transicao_em:now, auditoria_id:clip('aud_'+key+'_'+Date.now(),240), tentativas_envio:j.tentativas_envio||0, versao_ia:j.versao_ia||1, id:clip(j.id||('noticia_'+key),240), titulo:clip(j.titulo,500), conteudo:clip(j.conteudo,45000), resumo:clip(j.resumo,10000), titulo_original:clip(j.titulo_original,500), resumo_original:clip(j.resumo_original,10000), link_original:clip(j.link_original,2000), fonte:clip(j.fonte,300), imagem_url:clip(j.imagem_url,4000), categoria:clip(j.categoria,120), prioridade:clip(j.prioridade,40), approval_token:clip(j.approval_token||('apv_'+key),500), criado_em:j.criado_em||now, atualizado_em:now, story_id:clip(j.story_id||j.id,240)}}};}).filter(i=>!i.json._already_in_fila);\n"
+      },
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out=[]; for(const i of $input.all()){const j=i.json||{}; const key=String(j.story_key||j.link_original||j.id||'').slice(0,500); if(!key) continue; out.push({json:{transicao_id:'tr_'+key+'_'+Date.now(),ocorrido_em:new Date().toISOString(),story_key:key,item_id:j.id||'',estado_anterior:j.estado_anterior||'',estado_novo:'aguardando_moderacao',evento:'entrada_fila',agente:'n8n:entrada',execution_id:String($execution.id),approval_token:j.approval_token||'',message_id:j.message_id||'',wp_post_id:j.wp_post_id||'',erro:j.erro||'',observacao:j.titulo||''}})} return out;"
+      },
+      "id": "coleta-aa19e5a0-8a13-4271-8b1b-9beef2a11b1d",
+      "name": "Audita entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log_Transicoes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "coleta-601a55ad-3d2b-4270-a555-6296c0d06608",
+      "name": "Grava Log — entrada",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1260,
+        700
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst strip = (v) => String(v ?? '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\\s+/g, ' ').trim();\nconst pick = (...values) => values.find(v => v !== undefined && v !== null && String(v).trim()) || '';\nconst parse = (raw) => { try { return JSON.parse(String(raw || '').trim().replace(/^\\uFEFF/, '')); } catch (e) { return {}; } };\nconst imageFromHtml = (v) => String(v || '').match(/<img[^>]+(?:src|data-src)=['\"]([^'\"]+)/i)?.[1] || '';\nconst imageValue = (...values) => { for (const v of values) { if (!v) continue; if (typeof v === 'object') { const x = v.url || v.href || v['@_url'] || v.$?.url; if (x) return x; } else if (String(v).trim()) { const h = imageFromHtml(v); if (h) return h; if (/^https?:|^\\/\\//i.test(String(v).trim())) return String(v).trim(); } } return ''; };\nconst absolute = (v) => String(v || '').trim().replace(/^\\/\\//, 'https://');\nconst out = [];\nfor (const item of items) {\n  const input = item.json || {};\n  const parsed = parse(input.output || input.text || input.response);\n  const titulo = strip(pick(parsed.titulo, parsed.title, input.titulo, input.title, input.titulo_original));\n  const link = String(pick(input.link_original, input.link, input.url, parsed.link, parsed.url)).trim();\n  const fonte = strip(pick(parsed.fonte, input.fonte, input.source)) || (() => { try { return new URL(link).hostname.replace(/^www\\./, ''); } catch (e) { return 'fonte não identificada'; } })();\n  const resumo = strip(pick(parsed.resumo, parsed.summary, input.resumo, input.summary, input.description));\n  const conteudo = strip(pick(parsed.conteudo, parsed.content, input.conteudo, input.content, input.description));\n  const imagem = absolute(imageValue(parsed.imagem_url, parsed.image_url, parsed.imagem, input.imagem_url, input.image_url, input.image, input.thumbnail, input.enclosure, input['media:content'], input['media:thumbnail'], input['content:encoded'], input.content, input.description));\n  const catText = String(pick(input.categoria, input.category, input.feed, input.fonte, titulo)).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, ' '); const categoria = /emprego|trabalho|vagas|oportunidade/.test(catText) ? 'Vagas' : /concurso|edital|seleção pública/.test(catText) ? 'Concursos' : /polícia|policial|crime|prisão|segurança/.test(catText) ? 'Policial' : /serviço|saúde pública|transporte|água|energia/.test(catText) ? 'Serviços' : /eleição|congresso|câmara|senado|lula|pt|bolsonaro|governo/.test(catText) ? 'Brasil' : /brasília|distrito federal|df|cldf/.test(catText) ? 'DF' : /entorno|goiânia|luziânia|valparaíso|águas lindas/.test(catText) ? 'Entorno' : strip(pick(parsed.categoria, parsed.category, input.categoria, 'Brasil')) || 'Brasil';\n  const relevante = pick(parsed.relevante, parsed.relevant, input.relevante, true);\n  const storyKey = String(pick(input.story_key, link, titulo)).toLowerCase().replace(/^(https?:\\/\\/)?(www\\.)?/, '').replace(/[?#].*$/, '').replace(/[^a-z0-9]+/g, '-').slice(0, 240);\n  const now = Date.now();\n  const id = 'noticia_' + now + '_' + out.length;\n  const approvalToken = storyKey + '-' + now + '-' + out.length;\n  out.push({ json: { ...input, id, titulo, title: titulo, titulo_original: pick(input.titulo_original, input.titulo, input.title, titulo), resumo, conteudo, content: conteudo, fonte, source: fonte, link_original: link, link, url: link, imagem_url: imagem, image_url: imagem, imagem_status: imagem ? 'encontrada' : 'não encontrada', categoria, relevante: String(relevante), prioridade: pick(parsed.prioridade, input.prioridade, '2'), story_key: storyKey, status: 'aguardando_moderacao', approval_token: approvalToken, criado_em: new Date().toISOString(), data_processamento: new Date().toISOString() } });\n}\nreturn out;",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "dfja01-mount",
+      "name": "Monta Registro de Fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS CNN Brasil — Notícias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read6",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read7",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read8",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read9",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read10",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Coleta Portais HTML — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS CNN Brasil — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Junta Feeds 1 — Notícias",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Junta Feeds 2 — Notícias",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read3": {
+      "main": [
+        [
+          {
+            "node": "Junta Feeds 3 — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read2": {
+      "main": [
+        [
+          {
+            "node": "Junta Feeds 3 — Notícias",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read4": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 04 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read5": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 04 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read6": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 05 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read7": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 05 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read8": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 06 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read9": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 06 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Read10": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 07 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 07 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Junta Feeds 1 — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 08 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta Feeds 2 — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 08 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Junta Feeds 3 — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 09 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 04 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 09 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 05 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 10 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 06 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 10 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 07 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 12 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 08 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 11 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 09 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 11 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 10 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 12 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 11 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 13 — DFJÁ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 12 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Agrega RSS 13 — DFJÁ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agrega RSS 13 — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Normaliza Itens — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Coleta Portais HTML — DFJÁ": {
+      "main": [
+        [
+          {
+            "node": "Normaliza Itens — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza Itens — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Filtra Duplicadas — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra Duplicadas — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Monta Registro de Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Registro para Planilha — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Salva Pendente — Notícias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Audita entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audita entrada": {
+      "main": [
+        [
+          {
+            "node": "Grava Log — entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta Registro de Fila": {
+      "main": [
+        [
+          {
+            "node": "Prepara Registro para Planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

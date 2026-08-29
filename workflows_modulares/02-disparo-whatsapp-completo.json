@@ -1,0 +1,487 @@
+{
+  "name": "DFJÁ 02 — Disparo WhatsApp em Lotes",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        768
+      ],
+      "id": "1a9ab00c-480e-4920-b5ca-e8225f090222",
+      "name": "Despacho a cada 10 min"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A1:AO2000"
+            },
+            "rangeDefinition": "specifyRangeA1",
+            "range": "A1:AO2000"
+          }
+        }
+      },
+      "id": "le-fila-antes-do-lote-noticias",
+      "name": "Le Fila Antes do Lote — Notícias",
+  "type": "n8n-nodes-base.googleSheets",
+  "typeVersion": 4.5,
+  "credentials": {
+    "googleSheetsOAuth2Api": {
+      "id": "RpYIQnWXiTrXaDJO",
+      "name": "Google Sheets account"
+    }
+  },
+  "position": [
+        1700,
+        650
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const now=Date.now(); const state=$getWorkflowStaticData('global'); if(Number(state.dfjaSendLockUntil||0)>now) return []; state.dfjaSendLockUntil=now+120000;\nconst csv=await this.helpers.httpRequest({method:'GET',url:'https://docs.google.com/spreadsheets/d/1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc/gviz/tq?tqx=out:csv&sheet=Configuração'}); const cfg={}; for(const line of String(csv).split(/\\r?\\n/).slice(1)){const m=line.match(/^\\s*\"?([^,\\\"]+)\"?\\s*,\\s*\"?([^\\\"]*)\"?/); if(m) cfg[m[1].trim()]=m[2].trim();}\nconst recipients=[cfg.aprovador_1,cfg.aprovador_2].filter(Boolean); const limit=Math.max(1,Math.min(20,Number(cfg.lote_tamanho||10))); const rows=$('Le Fila Antes do Lote — Notícias').all().map(i=>i.json||{}); const pending=rows.filter(r=>['pendente','aguardando_moderacao'].includes(String(r.status||'').toLowerCase())&&!String(r.sent_at||'').trim()&&!String(r.message_id||'').trim()); const unique=[]; const keys=new Set(); for(const r of pending){const k=String(r.story_key||r.link_original||r.id||'').toLowerCase().replace(/[?#].*$/,'').replace(/\\/$/,''); if(!k||keys.has(k)) continue; keys.add(k); unique.push(r);} const out=[];\nfor(const j of unique.slice(0,limit)){const ids=[]; for(const number of recipients){const payload={number,title:'DFJA - Triagem editorial',description:String(j.titulo||'')+'\\n\\n'+String(j.resumo||'').slice(0,400)+'\\n\\nFonte: '+String(j.fonte||'não identificada')+'\\nLink: '+String(j.link_original||'')+(String(j.imagem_url||'').trim()?'\\nImagem: '+String(j.imagem_url):'\\nImagem: não encontrada'),footer:'Escolha uma ação:',buttons:[{type:'reply',displayText:'Processar',id:'aprovar_'+String(j.approval_token||'')},{type:'reply',displayText:'Rejeitar',id:'rejeitar_'+String(j.approval_token||'')},{type:'reply',displayText:'Refazer',id:'refazer_'+String(j.approval_token||'')}]}; try{const r=await this.helpers.httpRequest({method:'POST',url:'http://evolution_go:8080/send/button',headers:{apikey:'ce7ace56-8be8-4e22-8018-4e9b34f398ac','Content-Type':'application/json'},body:payload,json:true,timeout:15000}); ids.push(String(r?.key?.id||r?.data?.key?.id||r?.data?.id||r?.id||number));}catch(e){ids.push('erro:'+String(e.message||e));}} out.push({json:{...j,whatsapp_status:ids.some(x=>x.startsWith('erro:'))?'erro':'enviado',whatsapp_response:{message_ids:ids},sent_at:new Date().toISOString(),evento_ultimo:'envio_whatsapp',agente_ultimo:'n8n:whatsapp',transicao_em:new Date().toISOString(),tentativas_envio:Number(j.tentativas_envio||0)+1}});} return out;"
+      },
+      "id": "8ed46ed7-cf59-47da-ba80-a8a7c7e31986",
+      "name": "Envia Aprovação WhatsApp — Lote",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        680
+      ],
+      "webhookId": "c45358d5-9a56-47d6-87b5-5b9cb00f04da",
+      "disabled": false
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "approval_token": "={{ $json.approval_token || '' }}",
+            "status": "aguardando_aprovacao",
+            "sent_at": "={{ $json.sent_at || new Date().toISOString() }}",
+            "message_id": "={{ (()=>{const r=$json.whatsapp_response||{};return r?.key?.id||r?.data?.key?.id||r?.data?.id||r?.id||''})() }}",
+            "http_status": "200",
+            "erro": "={{ $json.whatsapp_erro || '' }}",
+            "evento_ultimo": "envio_whatsapp",
+            "agente_ultimo": "n8n:whatsapp",
+            "transicao_em": "={{ new Date().toISOString() }}",
+            "tentativas_envio": "={{ Number($json.tentativas_envio || 1) }}",
+            "estado_anterior": "aguardando_moderacao",
+            "auditoria_id": "={{ $json.auditoria_id || \"\" }}"
+          },
+          "matchingColumns": [
+            "approval_token"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo",
+              "displayName": "resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo_original",
+              "displayName": "titulo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_original",
+              "displayName": "resumo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_original",
+              "displayName": "link_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "imagem_url",
+              "displayName": "imagem_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "approval_token",
+              "displayName": "approval_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "http_status",
+              "displayName": "http_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "story_key",
+              "displayName": "story_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prioridade",
+              "displayName": "prioridade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_analise",
+              "displayName": "data_analise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_envio",
+              "displayName": "data_envio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_publicacao",
+              "displayName": "data_publicacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "erro",
+              "displayName": "erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "marca-envio-whatsapp-idempotencia",
+      "name": "Marca Envio WhatsApp — Idempotência",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4144,
+        680
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out=[]; for(const i of $input.all()){const j=i.json||{}; const key=String(j.story_key||j.link_original||j.id||'').slice(0,500); if(!key) continue; out.push({json:{transicao_id:'tr_'+key+'_'+Date.now(),ocorrido_em:new Date().toISOString(),story_key:key,item_id:j.id||'',estado_anterior:j.estado_anterior||'',estado_novo:'aguardando_aprovacao',evento:'envio_whatsapp',agente:'n8n:whatsapp',execution_id:String($execution.id),approval_token:j.approval_token||'',message_id:j.message_id||'',wp_post_id:j.wp_post_id||'',erro:j.erro||'',observacao:j.titulo||''}})} return out;"
+      },
+      "id": "796c18bb-276e-4cbd-bd9f-5bb6047b714c",
+      "name": "Audita whatsapp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log_Transicoes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "21e1017d-bf1d-4996-ad88-dcef8f719872",
+      "name": "Grava Log — whatsapp",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      },
+      "position": [
+        2200,
+        700
+      ]
+    }
+  ],
+  "connections": {
+    "Despacho a cada 10 min": {
+      "main": [
+        [
+          {
+            "node": "Le Fila Antes do Lote — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Fila Antes do Lote — Notícias": {
+      "main": [
+        [
+          {
+            "node": "Envia Aprovação WhatsApp — Lote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envia Aprovação WhatsApp — Lote": {
+      "main": [
+        [
+          {
+            "node": "Marca Envio WhatsApp — Idempotência",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marca Envio WhatsApp — Idempotência": {
+      "main": [
+        [
+          {
+            "node": "Audita whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audita whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Grava Log — whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

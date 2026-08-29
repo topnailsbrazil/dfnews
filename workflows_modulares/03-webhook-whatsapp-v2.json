@@ -1,0 +1,865 @@
+{
+  "name": "DFJÁ 03 — Webhook WhatsApp V2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "noticias-aprovacao-dfja-v2",
+        "options": {}
+      },
+      "id": "dfja03-webhook",
+      "name": "Webhook Aprovação WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "dfja03-webhook-id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json || {};\nconst body = raw.body || raw;\nconst data = body.data || body;\nconst info = data.Info || data.info || {};\nconst key = data.key || data.Key || {};\nconst msg = data.message || data.Message || body.message || body.Message || {};\nconst text = (v) => String(v ?? '').normalize('NFC').trim();\nconst brutoJson = JSON.stringify(raw);\nconst buttonId = text(msg.buttonsResponseMessage?.selectedButtonId || msg.buttonResponseMessage?.selectedButtonId || msg.ButtonsResponseMessage?.SelectedButtonID || msg.ButtonResponseMessage?.SelectedButtonID || data.buttonId || data.button_id || brutoJson.match(/selectedButtonId\\\"?\\s*[:=]\\s*\\\"([^\\\"]+)/i)?.[1]);\nconst conversation = text(msg.conversation || msg.Conversation || msg.extendedTextMessage?.text || msg.ExtendedTextMessage?.text);\nconst bruto = text(conversation || buttonId);\nconst cmdMatch = bruto.match(/^(APROVAR|PROCESSAR|REJEITAR|IGNORAR|REFAZER)(?:_|\\b)/i);\nconst comando = (cmdMatch?.[1] || '').toUpperCase();\nconst tokenMatch = bruto.match(/^(?:aprovar|processar|rejeitar|ignorar|refazer)_([^\\s]+)/i);\nconst approval_token = text(tokenMatch?.[1] || data.approval_token || body.approval_token);\nconst telefone = text(body.sender || data.sender || info.Chat || info.chat || info.Sender || info.sender || key.remoteJid || key.RemoteJid).replace(/@(s.whatsapp.net|g.us|lid)/g, '');\nconst story_id = text(data.story_id || body.story_id || approval_token);\nconst message_id = text(key.id || key.ID || data.messageId || body.messageId || info.ID || info.id);\nconst evento = text(raw.evento || body.evento || raw.event || body.event || '').toLowerCase().includes('message') ? 'messages.upsert' : text(raw.evento || body.evento || raw.event || body.event);\nconst ecoDoRobo = Boolean(info.IsFromMe ?? info.isFromMe ?? false);\nconst isGroup = Boolean(info.IsGroup ?? info.isGroup ?? false);\nconst ehAprovador = ['[REDACTED_PHONE]','[REDACTED_PHONE]','[REDACTED_PHONE]'].includes(telefone);\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.idsProcessados)) staticData.idsProcessados = [];\nconst duplicado = !!message_id && staticData.idsProcessados.includes(message_id);\nif (message_id && !duplicado) { staticData.idsProcessados.push(message_id); staticData.idsProcessados = staticData.idsProcessados.slice(-200); }\nreturn [{ json: { ...raw, telefone, comando, texto: bruto, approval_token, story_id, message_id, duplicado, evento, ecoDoRobo, isGroup, ehAprovador, recebido_em: new Date().toISOString(), tipo_interacao: buttonId ? 'button' : 'text' } }];"
+      },
+      "id": "dfja03-extract",
+      "name": "Interpreta comando do aprovador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-evento",
+              "leftValue": "={{ $json.evento }}",
+              "rightValue": "messages.upsert",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-nao-eco",
+              "leftValue": "={{ $json.ecoDoRobo }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-nao-duplicado",
+              "leftValue": "={{ $json.duplicado }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-grupo",
+              "leftValue": "={{ $json.isGroup }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-telefone",
+              "leftValue": "={{ $json.ehAprovador }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-texto",
+              "leftValue": "={{ $json.texto }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "cond-nao-buscar",
+              "leftValue": "={{ $json.texto.toLowerCase() }}",
+              "rightValue": "buscar",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dfja03-validate",
+      "name": "Valida comando e token",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A1:Z1000"
+            },
+            "rangeDefinition": "specifyRangeA1",
+            "range": "A1:Z1000"
+          }
+        }
+      },
+      "id": "dfja03-read",
+      "name": "Busca Fila para decisão",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => { const r = i.json || {}; let p = {}; try { p = JSON.parse(String(r.output || '{}')); } catch (e) {} return { ...r, titulo: r.titulo || p.titulo || p.title, conteudo: r.conteudo || p.conteudo || p.content, resumo: r.resumo || p.resumo || p.summary, fonte: r.fonte || p.fonte || p.source, link: r.link || r.link_original || p.link || p.url, imagem_url: r.imagem_url || p.imagem_url || p.image_url, imagem_status: r.imagem_status || (r.imagem_url || p.imagem_url || p.image_url ? 'encontrada' : 'não encontrada'), categoria: r.categoria || p.categoria || p.category, prioridade: r.prioridade || p.prioridade }; });\nconst cmd = $('Extrai Mensagem — Notícias').first()?.json || {};\nconst wanted = String(cmd.approval_token || '').trim();\nconst comando = String(cmd.comando || '').trim().toUpperCase();\nconst same = (a,b) => String(a ?? '').trim() && String(a ?? '').trim() === String(b ?? '').trim();\nconst exato = wanted ? rows.find(r => [r.approval_token, r.approvalToken, r.token, r.id, r.story_id].some(v => same(v, wanted))) : null;\nif (wanted && !exato) return [];\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.approvalLocks) staticData.approvalLocks = {};\nconst now = Date.now();\nif (wanted) {\n  const lock = Number(staticData.approvalLocks[wanted] || 0);\n  if (lock && now - lock < 900000) return [];\n  const estado = String(exato?.status || '').toLowerCase();\n  if (['processando_aprovacao','rascunho_wp','publicada','rejeitada'].includes(estado)) return [];\n  staticData.approvalLocks[wanted] = now;\n}\nconst pendentes = rows.filter(r => ['pendente','aguardando_aprovacao','aguardando_moderacao'].includes(String(r.status ?? '').toLowerCase()));\nconst quando = r => r.criado_em || r.atualizado_em || r.data || r.created_at || 0;\nconst ordenadas = [...pendentes].sort((a,b) => new Date(quando(b)) - new Date(quando(a)));\nconst alvo = exato || ordenadas[0];\nif (!alvo) return [];\nconst decisao = { APROVAR: 'aprovar', PROCESSAR: 'aprovar', REJEITAR: 'rejeitar', IGNORAR: 'rejeitar', REFAZER: 'refazer' }[comando];\nif (!decisao) return [];\nif (decisao !== 'refazer') {\n  staticData.activeBatch = Array.isArray(staticData.activeBatch) ? staticData.activeBatch.filter(t => t !== String(alvo.approval_token || wanted)) : [];\n  staticData.resolvedTokens = Array.isArray(staticData.resolvedTokens) ? staticData.resolvedTokens : [];\n  staticData.resolvedTokens.push(String(alvo.approval_token || wanted));\n  staticData.resolvedTokens = staticData.resolvedTokens.slice(-1000);\n}\nreturn [{ json: { ...alvo, decisao, approval_token: String(alvo.approval_token || wanted), story_id: String(alvo.id || alvo.story_id || wanted) } }];"
+      },
+      "id": "dfja03-resolve",
+      "name": "Resolve matéria pelo token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "sw-aprovar",
+                    "leftValue": "={{ $json.decisao }}",
+                    "rightValue": "aprovar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Aprovar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "sw-rejeitar",
+                    "leftValue": "={{ $json.decisao }}",
+                    "rightValue": "rejeitar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Rejeitar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "sw-refazer",
+                    "leftValue": "={{ $json.decisao }}",
+                    "rightValue": "refazer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Refazer"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "dfja03-switch",
+      "name": "Roteia decisão",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "rejeitada",
+            "row_number": 0,
+            "evento_ultimo": "decisao_rejeitada",
+            "agente_ultimo": "whatsapp:moderador",
+            "transicao_em": "={{ new Date().toISOString() }}",
+            "estado_anterior": "aguardando_aprovacao"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo",
+              "displayName": "resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo_original",
+              "displayName": "titulo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_original",
+              "displayName": "resumo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_original",
+              "displayName": "link_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_wp",
+              "displayName": "link_wp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dfja03-reject",
+      "name": "Marca rejeitada na Fila",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1560,
+        160
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_go:8080/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "[REDACTED_API_KEY]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"[REDACTED_PHONE]\",\n  \"text\": \"🗑️ Matéria rejeitada: {{$json.titulo}}\"\n}",
+        "options": {}
+      },
+      "id": "dfja03-confirm-reject",
+      "name": "Confirma rejeição no WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        160
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "dfja03-process",
+      "name": "Envia matéria aprovada ao processamento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        -120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.dfja.com.br/webhook/dfja-processamento-pwa-v2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'Título original: ' + $json.titulo_original + '\\n\\nResumo/trecho original: ' + $json.resumo_original + '\\n\\nFonte: ' + $json.fonte + '\\nLink original: ' + $json.link_original + '\\n\\nVersão anterior (NÃO reaproveitar, gerar diferente):\\nTítulo: ' + $json.titulo + '\\nConteúdo: ' + $json.conteudo }}",
+        "options": {
+          "systemMessage": "Você é o assistente editorial do DFJA. Reescreva novamente apenas notícias do Distrito Federal e do Entorno, a partir do título e resumo originais. Se o assunto não tiver relação clara com DF/Entorno ou não tiver impacto local comprovado, responda SOMENTE: IGNORAR.\n\nGere uma versão com ângulo, estrutura e frases diferentes da versão anterior. Mantenha os fatos corretos, não invente informações, use tom jornalístico direto e não dê opinião pessoal.\n\nResponda SOMENTE em JSON válido, sem markdown:\n{\"titulo\":\"...\",\"conteudo\":\"...\",\"resumo\":\"...\"}\n\n- titulo: direto, sem clickbait\n- conteudo: use quantos parágrafos forem necessários para uma matéria clara e completa; 3 a 5 é apenas uma preferência, não um limite. Inclua listas e links práticos de inscrição/serviço quando existirem na fonte\n- resumo: 1 ou 2 frases, máximo 200 caracteres\n- não inclua a fonte no final do texto"
+        }
+      },
+      "id": "dfja03-refazer-ai",
+      "name": "Reescreve novamente sob comando",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1560,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Pega Mais Antiga Pendente — Notícias').first().json;\nlet texto = ($input.first().json.output || $input.first().json.text || '').trim();\ntexto = texto.replace(/^```json/i, '').replace(/```$/, '').trim();\n\nlet parsed;\ntry { parsed = JSON.parse(texto); } catch (e) { return []; }\nif (!parsed.titulo || !parsed.conteudo) return [];\n\nreturn [{\n  json: {\n    id: original.id,\n    titulo: parsed.titulo,\n    conteudo: parsed.conteudo,\n    resumo: parsed.resumo || ''\n  }\n}];"
+      },
+      "id": "dfja03-refazer-monta",
+      "name": "Monta nova versão",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{ $json.id }}",
+            "titulo": "={{ $json.titulo }}",
+            "conteudo": "={{ $json.conteudo }}",
+            "resumo": "={{ $json.resumo }}",
+            "status": "pendente",
+            "row_number": 0,
+            "evento_ultimo": "refacao_solicitada",
+            "agente_ultimo": "whatsapp:moderador",
+            "transicao_em": "={{ new Date().toISOString() }}",
+            "estado_anterior": "aguardando_aprovacao",
+            "versao_ia": "={{ Number($json.versao_ia || 1) + 1 }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumo",
+              "displayName": "resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "titulo_original",
+              "displayName": "titulo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_original",
+              "displayName": "resumo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_original",
+              "displayName": "link_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_wp",
+              "displayName": "link_wp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dfja03-refazer-save",
+      "name": "Atualiza Fila após refazer",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2080,
+        420
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_go:8080/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "[REDACTED_API_KEY]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"[REDACTED_PHONE]\",\n  \"text\": \"✏️ Nova versão da matéria:\\n\\n{{$json.titulo}}\\n\\n{{$json.resumo}}\"\n}",
+        "options": {}
+      },
+      "id": "dfja03-refazer-send",
+      "name": "Envia nova versão ao WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        420
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Aprovação WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Interpreta comando do aprovador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interpreta comando do aprovador": {
+      "main": [
+        [
+          {
+            "node": "Valida comando e token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida comando e token": {
+      "main": [
+        [
+          {
+            "node": "Busca Fila para decisão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca Fila para decisão": {
+      "main": [
+        [
+          {
+            "node": "Resolve matéria pelo token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve matéria pelo token": {
+      "main": [
+        [
+          {
+            "node": "Roteia decisão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Roteia decisão": {
+      "main": [
+        [
+          {
+            "node": "Envia matéria aprovada ao processamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marca rejeitada na Fila",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reescreve novamente sob comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marca rejeitada na Fila": {
+      "main": [
+        [
+          {
+            "node": "Confirma rejeição no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reescreve novamente sob comando": {
+      "main": [
+        [
+          {
+            "node": "Monta nova versão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta nova versão": {
+      "main": [
+        [
+          {
+            "node": "Atualiza Fila após refazer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Fila após refazer": {
+      "main": [
+        [
+          {
+            "node": "Envia nova versão ao WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

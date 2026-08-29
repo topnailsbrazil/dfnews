@@ -1,0 +1,424 @@
+{
+  "name": "DFJÁ 04 — Processamento Editorial e PWA V2",
+  "nodes": [
+    {
+      "id": "dfja04-webhook",
+      "name": "Webhook processamento aprovado",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "dfja04-webhook-id",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dfja-processamento-pwa-v2",
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ 'Título: ' + ($json.titulo || '') + '\\n\\nTexto original: ' + ($json.conteudo || $json.resumo || '') + '\\n\\nFonte: ' + ($json.fonte || '') + '\\n\\nImagem candidata: ' + ($json.imagem_url || '') + '\\n\\nLink: ' + ($json.link_original || $json.link || '') }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Você é o editor-chefe do DFJÁ, especializado no Distrito Federal, Entorno e notícias nacionais relevantes.\nReescreva a matéria com linguagem jornalística, factual, clara e autoral, sem inventar fatos. Use somente o título, texto original, resumo e fonte fornecidos.\nPara conteúdo relevante, produza conteudo em 2 ou 3 parágrafos HTML (<p>...</p>), com até 300 palavras em cada parágrafo. Produza também resumo em 2 ou 3 parágrafos curtos e informativos.\nNão copie trechos longos, não acrescente opinião e não coloque o link original no corpo. Preserve a imagem quando houver URL confiável.\nClassifique obrigatoriamente a matéria em uma destas categorias exatas: DF, Entorno, Brasil, Policial, Fato ou Fake, Emprego e Concursos, Vagas, Tecnologia, Concursos, Esporte, Social, Serviços ou Cultura.\nUse DF somente para fatos ocorridos no Distrito Federal ou que afetem diretamente Brasília e suas regiões administrativas. Use Entorno somente para municípios do Entorno do Distrito Federal. Use Brasil para fatos nacionais relevantes, mesmo que não sejam locais, mas não use Brasil para notícias internacionais sem impacto brasileiro.\nConsidere relevante=true quando a matéria for local, do Entorno ou nacional de interesse público. Use relevante=false apenas para publicidade, conteúdo incompleto, duplicado ou assunto sem relevância editorial. Nunca invente ligação com o DF ou Entorno para justificar relevância.\nResponda somente JSON válido, sem markdown, exatamente neste formato: {\"relevante\":true,\"categoria\":\"DF|Entorno|Brasil|Policial|Fato ou Fake|Emprego e Concursos|Vagas|Tecnologia|Concursos|Esporte|Social|Serviços|Cultura\",\"titulo\":\"...\",\"conteudo\":\"<p>...</p><p>...</p>\",\"resumo\":\"Parágrafo 1...\\n\\nParágrafo 2...\",\"imagem_url\":\"URL ou vazio\",\"link\":\"URL original\",\"fonte\":\"...\"}.\n\nCRITÉRIO DE COBERTURA EDITORIAL: o fluxo deve encaminhar praticamente todas as matérias jornalísticas inéditas das fontes para o aprovador. Trate como relevante=true toda matéria não publicitária e não duplicada que se enquadre em qualquer categoria do feed: DF (incluindo governo local, Câmara Legislativa do DF/CLDF, serviços públicos do DF e eleições do DF), Entorno (municípios do Entorno), Brasil (Congresso Nacional, Câmara dos Deputados, Senado Federal, assembleias legislativas, eleições nacionais, partidos, Lula, PT, Bolsonaro, Flávio Bolsonaro, governo e decisões judiciais de impacto nacional), Policial (polícia, crimes, prisões, investigações e segurança pública), Fato ou Fake, Emprego e Concursos, Vagas, Tecnologia, Concursos, Esporte, Social, Serviços e Cultura. Inclua também oportunidades de emprego, concursos, vagas de trabalho e serviços à população do DF e Entorno. Matérias nacionais relevantes devem passar mesmo sem mencionar Brasília. Não descarte por preferência editorial, tema político, fonte, alcance geográfico ou por já existirem outras matérias sobre o mesmo assunto: descarte somente publicidade, conteúdo incompleto/sem informação jornalística ou duplicata real da mesma história. A aprovação/rejeição/reescrita será decidida pelo aprovador no WhatsApp. Use exatamente uma categoria permitida pelo plugin e preserve a fonte e o link originais."
+        }
+      },
+      "id": "dfja04-ai",
+      "name": "Reescreve matéria aprovada com IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        300,
+        0
+      ]
+    },
+    {
+      "id": "dfja04-normalize",
+      "name": "Normaliza payload editorial",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const input = $input.first()?.json || {};\nlet parsed = {};\ntry { parsed = JSON.parse(String(input.output || input.text || '').replaceAll(String.fromCharCode(96), '').trim()); } catch (e) {}\nconst original = $('Pega Mais Antiga Pendente — Notícias').first()?.json || {};\nconst val = (...xs) => xs.find(v => v !== undefined && v !== null && String(v).trim()) || '';\nreturn [{ json: { ...original, titulo: val(parsed.titulo, parsed.title, original.titulo), resumo: val(parsed.resumo, parsed.summary, original.resumo), conteudo: val(parsed.conteudo, parsed.content, original.conteudo, original.resumo), categoria: val(parsed.categoria, parsed.category, original.categoria, 'Brasil'), imagem_url: val(parsed.imagem_url, parsed.image_url, original.imagem_url), link_original: val(parsed.link, parsed.url, original.link_original), fonte: val(parsed.fonte, original.fonte), status: 'processando_ia', processado_ia_em: new Date().toISOString() } }];"
+      },
+      "credentials": {}
+    },
+    {
+      "id": "dfja04-pwa",
+      "name": "Envia para PWA Editorial",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://dfnews-ten.vercel.app/api/inbound",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dfja-pwa-secret",
+              "value": "={{$env.N8N_PWA_INBOUND_SECRET}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ n8n_item_id: $json.id || $json.story_id, title: $json.titulo || $json.title, content: $json.conteudo || $json.content, excerpt: $json.resumo || $json.excerpt, image_url: $json.imagem_url || $json.image_url, image_credit: $json.image_credit || \"\", source_name: $json.fonte || $json.source_name, source_url: $json.link_original || $json.link || $json.source_url, author: $json.author || \"Redação\", tags: Array.isArray($json.tags) ? $json.tags : [], categoria: $json.categoria || $json.category || \"Brasil\" }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{$('Normaliza payload editorial').first().json.id || $('Normaliza payload editorial').first().json.story_id}}",
+            "status": "em_revisao_pwa",
+            "evento_ultimo": "enviada_pwa",
+            "agente_ultimo": "n8n:pwa",
+            "transicao_em": "={{new Date().toISOString()}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conteudo",
+              "displayName": "conteudo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo",
+              "displayName": "resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo_original",
+              "displayName": "titulo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_original",
+              "displayName": "resumo_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "link_original",
+              "displayName": "link_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte",
+              "displayName": "fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "imagem_url",
+              "displayName": "imagem_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data",
+              "displayName": "data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "approval_token",
+              "displayName": "approval_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sent_at",
+              "displayName": "sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "http_status",
+              "displayName": "http_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "story_key",
+              "displayName": "story_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prioridade",
+              "displayName": "prioridade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_analise",
+              "displayName": "data_analise",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_envio",
+              "displayName": "data_envio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_publicacao",
+              "displayName": "data_publicacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "erro",
+              "displayName": "erro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dfja04-sheet",
+      "name": "Marca enviada ao PWA na Fila",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook processamento aprovado": {
+      "main": [
+        [
+          {
+            "node": "Reescreve matéria aprovada com IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reescreve matéria aprovada com IA": {
+      "main": [
+        [
+          {
+            "node": "Normaliza payload editorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza payload editorial": {
+      "main": [
+        [
+          {
+            "node": "Envia para PWA Editorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envia para PWA Editorial": {
+      "main": [
+        [
+          {
+            "node": "Marca enviada ao PWA na Fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

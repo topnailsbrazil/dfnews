@@ -1,0 +1,457 @@
+{
+  "name": "DFJÁ 05 — Retorno PWA, WordPress e Arquivo V2",
+  "nodes": [
+    {
+      "id": "dfja05-webhook",
+      "name": "Webhook retorno do PWA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "dfja05-webhook-id",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dfja-retorno-pwa-v2",
+        "options": {}
+      }
+    },
+    {
+      "id": "dfja05-validate",
+      "name": "Valida retorno e estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out=[]; for (const item of $input.all()) { const j=item.json||{}; if (!j.n8n_item_id && !j.article_id) continue; const status=String(j.status||j.editorial_status||'').toLowerCase(); const mapped=status==='publicada'?'publicada':status==='rascunho_wp'?'rascunho_wp':status==='erro_publicacao'?'erro_publicacao':'em_revisao_pwa'; out.push({json:{...j,id:j.n8n_item_id||j.id||'',status:mapped,link_wp:j.wordpress_url||j.wp_url||'',wp_post_id:j.wordpress_post_id||j.wp_post_id||'',wp_media_id:j.wordpress_media_id||j.wp_media_id||'',evento_ultimo:'retorno_pwa',agente_ultimo:'pwa',transicao_em:new Date().toISOString(),erro:j.last_error||j.erro||''}}); } return out;"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Fila",
+          "mode": "name"
+        },
+        "columns": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "Fila",
+            "mode": "name"
+          },
+          "columns": {
+            "mappingMode": "autoMapInputData",
+            "value": {
+              "approval_token": "={{ $('Pega Mais Antiga Pendente — Notícias').first().json.approval_token }}",
+              "status": "rascunho_wp",
+              "id": "={{ $('Pega Mais Antiga Pendente — Notícias').first().json.id || '' }}",
+              "story_id": "={{ $json.id || $('Pega Mais Antiga Pendente — Notícias').first().json.story_id || '' }}",
+              "data_publicacao": "={{ new Date().toISOString() }}",
+              "erro": "",
+              "evento_ultimo": "rascunho_wordpress",
+              "agente_ultimo": "n8n:wordpress",
+              "transicao_em": "={{ new Date().toISOString() }}",
+              "estado_anterior": "aprovada_para_ia",
+              "link_wp": "={{ $json.link || $json.link_wp || \"\" }}",
+              "wp_media_id": "={{ $json.wp_media_id || $json.media_id || \"\" }}"
+            },
+            "matchingColumns": [
+              "approval_token"
+            ],
+            "schema": [
+              {
+                "id": "id",
+                "displayName": "id",
+                "required": false,
+                "defaultMatch": true,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "titulo",
+                "displayName": "titulo",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "conteudo",
+                "displayName": "conteudo",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "resumo",
+                "displayName": "resumo",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "titulo_original",
+                "displayName": "titulo_original",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "resumo_original",
+                "displayName": "resumo_original",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "link_original",
+                "displayName": "link_original",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "fonte",
+                "displayName": "fonte",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "imagem_url",
+                "displayName": "imagem_url",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "status",
+                "displayName": "status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "data",
+                "displayName": "data",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "approval_token",
+                "displayName": "approval_token",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "sent_at",
+                "displayName": "sent_at",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "message_id",
+                "displayName": "message_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "http_status",
+                "displayName": "http_status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "story_key",
+                "displayName": "story_key",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "categoria",
+                "displayName": "categoria",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "prioridade",
+                "displayName": "prioridade",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "data_analise",
+                "displayName": "data_analise",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "data_envio",
+                "displayName": "data_envio",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "data_publicacao",
+                "displayName": "data_publicacao",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "erro",
+                "displayName": "erro",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "number",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {},
+          "value": {
+            "id": "={{$json.id}}",
+            "status": "={{$json.status}}",
+            "link_wp": "={{$json.link_wp}}",
+            "wp_post_id": "={{$json.wp_post_id}}",
+            "wp_media_id": "={{$json.wp_media_id}}",
+            "erro": "={{$json.erro}}",
+            "evento_ultimo": "={{$json.evento_ultimo}}",
+            "agente_ultimo": "={{$json.agente_ultimo}}",
+            "transicao_em": "={{$json.transicao_em}}"
+          },
+          "matchingColumns": [
+            "id"
+          ]
+        },
+        "options": {}
+      },
+      "id": "dfja05-sheet",
+      "name": "Atualiza Fila com resultado do PWA",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        600,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const out=[]; for(const i of $input.all()){const j=i.json||{}; const key=String(j.story_key||j.link_original||j.id||'').slice(0,500); if(!key) continue; out.push({json:{transicao_id:'tr_'+key+'_'+Date.now(),ocorrido_em:new Date().toISOString(),story_key:key,item_id:j.id||'',estado_anterior:j.estado_anterior||'',estado_novo:'rascunho_wp',evento:'rascunho_wordpress',agente:'n8n:wordpress',execution_id:String($execution.id),approval_token:j.approval_token||'',message_id:j.message_id||'',wp_post_id:j.wp_post_id||'',erro:j.erro||'',observacao:j.titulo||''}})} return out;"
+      },
+      "id": "dfja05-audit",
+      "name": "Audita retorno do PWA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1_tL_kPprM4Q1p7DKunBlFhsTBgfjFU6iHFb_8SCRekc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Log_Transicoes",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "dfja05-log",
+      "name": "Grava log do retorno PWA",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RpYIQnWXiTrXaDJO",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook retorno do PWA": {
+      "main": [
+        [
+          {
+            "node": "Valida retorno e estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valida retorno e estado": {
+      "main": [
+        [
+          {
+            "node": "Atualiza Fila com resultado do PWA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualiza Fila com resultado do PWA": {
+      "main": [
+        [
+          {
+            "node": "Audita retorno do PWA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audita retorno do PWA": {
+      "main": [
+        [
+          {
+            "node": "Grava log do retorno PWA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
