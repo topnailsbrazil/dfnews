@@ -35,6 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data: article, error } = await supabase.from("articles").select("*").eq("id", params.id).single();
   if (error || !article) return NextResponse.json({ error: "Matéria não encontrada." }, { status: 404 });
   if (article.wordpress_post_id && article.editorial_status === "publicada") return NextResponse.json({ ok: true, id: article.wordpress_post_id, url: article.wordpress_url, idempotent: true });
+  if (!article.image_url && !article.wordpress_media_id) return NextResponse.json({ error: "A matéria precisa de uma imagem de destaque antes da publicação." }, { status: 400 });
 
   const auth = `Basic ${Buffer.from(`${wpUser}:${wpPassword}`).toString("base64")}`;
   let mediaId = article.wordpress_media_id || 0;
