@@ -21,7 +21,22 @@ export async function POST(request: NextRequest) {
     }
   }
   const row = { title: String(body.title), slug: String(body.slug || `${body.n8n_item_id}-${Date.now()}`).toLowerCase().replace(/[^a-z0-9-]+/g, "-"), excerpt: body.excerpt || null, content: String(body.content), image_url: body.image_url || null, image_credit: body.image_credit || null, source_name: body.source_name || null, source_url: body.source_url || null, author: body.author || "Redação", tags: Array.isArray(body.tags) ? body.tags.map(String) : [], category_id: categoryId, n8n_item_id: String(body.n8n_item_id), editorial_status: "reescrita_ia", ai_status: "concluida", status: "review", published_at: body.published_at || null, updated_at: new Date().toISOString() };
-  const { data, error } = await supabase.from("articles").upsert(row, { onConflict: "n8n_item_id" }).select("id,n8n_item_id,editorial_status").single();
+  // Older prototype databases may not have a UNIQUE constraint on n8n_item_id.
+  // Resolve idempotency explicitly so inbound processing works on both schemas.
+  const existing = await supabase.from("articles").select("id").eq("n8n_item_id", row.n8n_item_id).limit(1).maybeSingle();
+  if (existing.error) return NextResponse.json({ error: existing.error.message }, { status: 502 });
+
+  let data: { id: string; n8n_item_id: string; editorial_status: string } | null = null;
+  let error: { message: string } | null = null;
+  if (existing.data?.id) {
+    const result = await supabase.from("articles").update(row).eq("id", existing.data.id).select("id,n8n_item_id,editorial_status").single();
+    data = result.data;
+    error = result.error;
+  } else {
+    const result = await supabase.from("articles").insert(row).select("id,n8n_item_id,editorial_status").single();
+    data = result.data;
+    error = result.error;
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 502 });
   return NextResponse.json({ ok: true, article: data });
 }
