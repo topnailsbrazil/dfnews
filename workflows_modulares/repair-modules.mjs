@@ -34,6 +34,17 @@ const audit = cMap.get('Audita entrada');
 const log = cMap.get('Grava Log — entrada');
 if (log) log.credentials = credSheets;
 cNodes.push(mount);
+const newFeeds = [
+  ['RSS ICL Notícias', 'https://iclnoticias.com.br/feed/', [120, 720]],
+  ['RSS BBC Brasil', 'https://feeds.bbci.co.uk/portuguese/rss.xml', [120, 840]],
+  ['RSS Gran Cursos', 'https://blog.grancursosonline.com.br/feed/', [120, 960]],
+  ['RSS Congresso em Foco', 'https://www.congressoemfoco.com.br/feed', [120, 1080]],
+];
+for (const [name, url, position] of newFeeds) {
+  cNodes.push(clone('RSS CNN Brasil — Notícias', { name, id: `dfja01-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, position, parameters: { ...cMap.get('RSS CNN Brasil — Notícias').parameters, url } }));
+}
+const mergeNames = ['Junta RSS novos 1', 'Junta RSS novos 2', 'Junta RSS novos 3', 'Junta RSS novos 4'];
+for (let i = 0; i < mergeNames.length; i++) cNodes.push(clone('Junta Feeds 3 — Notícias', { name: mergeNames[i], id: `dfja01-${i + 1}-merge-new`, position: [420, 720 + i * 120] }));
 if (prepare) prepare.position = [1260, 0];
 const c1 = {};
 for (const [name, value] of Object.entries(collection.connections)) {
@@ -48,6 +59,13 @@ c1['Schedule Trigger'].main[0] = c1['Schedule Trigger'].main[0].filter((item) =>
 c1['Filtra Duplicadas — Notícias'] = { main: [[{ node: 'Monta Registro de Fila', type: 'main', index: 0 }]] };
 c1['Monta Registro de Fila'] = { main: [[{ node: 'Prepara Registro para Planilha', type: 'main', index: 0 }]] };
 delete c1['Salva Pendente — Notícias'];
+const newFeedNames = newFeeds.map(([name]) => name);
+c1['Agrega RSS 13 — DFJÁ'] = { main: [[{ node: 'Junta RSS novos 1', type: 'main', index: 0 }]] };
+c1['Junta RSS novos 1'] = { main: [[{ node: 'Junta RSS novos 2', type: 'main', index: 0 }]] };
+c1['Junta RSS novos 2'] = { main: [[{ node: 'Junta RSS novos 3', type: 'main', index: 0 }]] };
+c1['Junta RSS novos 3'] = { main: [[{ node: 'Junta RSS novos 4', type: 'main', index: 0 }]] };
+c1['Junta RSS novos 4'] = { main: [[{ node: 'Normaliza Itens — Notícias', type: 'main', index: 0 }]] };
+for (const name of newFeedNames) c1[name] = { main: [[{ node: mergeNames[newFeedNames.indexOf(name)], type: 'main', index: 1 }]] };
 out('01-coleta-normalizacao-v3.json', base('DFJÁ 01 — Coleta e Normalização V3', cNodes, c1));
 
 // 03: WhatsApp is the only gate that invokes the AI/PWA branch.

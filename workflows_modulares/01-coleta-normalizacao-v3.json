@@ -551,6 +551,114 @@
         1000,
         0
       ]
+    },
+    {
+      "parameters": {
+        "url": "https://iclnoticias.com.br/feed/",
+        "options": {}
+      },
+      "id": "dfja01-rss-icl-not-cias",
+      "name": "RSS ICL Notícias",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/portuguese/rss.xml",
+        "options": {}
+      },
+      "id": "dfja01-rss-bbc-brasil",
+      "name": "RSS BBC Brasil",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://blog.grancursosonline.com.br/feed/",
+        "options": {}
+      },
+      "id": "dfja01-rss-gran-cursos",
+      "name": "RSS Gran Cursos",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.congressoemfoco.com.br/feed",
+        "options": {}
+      },
+      "id": "dfja01-rss-congresso-em-foco",
+      "name": "RSS Congresso em Foco",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "dfja01-1-merge-new",
+      "name": "Junta RSS novos 1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        420,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "dfja01-2-merge-new",
+      "name": "Junta RSS novos 2",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        420,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "dfja01-3-merge-new",
+      "name": "Junta RSS novos 3",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        420,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "dfja01-4-merge-new",
+      "name": "Junta RSS novos 4",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        420,
+        1080
+      ]
     }
   ],
   "pinData": {},
@@ -894,7 +1002,7 @@
       "main": [
         [
           {
-            "node": "Normaliza Itens — Notícias",
+            "node": "Junta RSS novos 1",
             "type": "main",
             "index": 0
           }
@@ -968,6 +1076,94 @@
             "node": "Prepara Registro para Planilha",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta RSS novos 1": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta RSS novos 2": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta RSS novos 3": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Junta RSS novos 4": {
+      "main": [
+        [
+          {
+            "node": "Normaliza Itens — Notícias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS ICL Notícias": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS BBC Brasil": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Gran Cursos": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "RSS Congresso em Foco": {
+      "main": [
+        [
+          {
+            "node": "Junta RSS novos 4",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
