@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const wpBase = process.env.WORDPRESS_URL || "https://dfja.com.br";
+const wpBase = (process.env.WORDPRESS_URL || "https://dfja.com.br")
+  .trim()
+  .replace(/\/+$/, "")
+  .replace(/\/wp-json(?:\/wp\/v2)?$/i, "");
 const wpUser = process.env.WORDPRESS_USERNAME;
 const wpPassword = process.env.WORDPRESS_APPLICATION_PASSWORD;
+
+function describeWordPressError(label: string, response: Response) {
+  return response.text().then((body) => {
+    const compact = body.replace(/\s+/g, " ").trim().slice(0, 240);
+    return `${label} (${response.status}) em ${response.url}${compact ? `: ${compact}` : ""}`;
+  });
+}
 
 function supabaseFor(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,7 +45,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       const imageBuffer = await imageResponse.arrayBuffer();
       const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
       const mediaResponse = await fetch(`${wpBase}/wp-json/wp/v2/media`, { method: "POST", headers: { Authorization: auth, "Content-Disposition": `attachment; filename=dfja-${article.id}.jpg`, "Content-Type": contentType }, body: imageBuffer });
-      if (!mediaResponse.ok) throw new Error(`upload da imagem falhou (${mediaResponse.status})`);
+      if (!mediaResponse.ok) throw new Error(await describeWordPressError("upload da imagem falhou", mediaResponse));
       mediaId = Number((await mediaResponse.json()).id);
     }
     let categoryIds: number[] | undefined;
@@ -51,9 +61,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       }
     }
     const payload = { title: article.title, content: article.content, excerpt: article.excerpt || "", status: wpStatus, categories: categoryIds, tags: Array.isArray(article.tags) ? article.tags : undefined, featured_media: mediaId || undefined, meta: { dfja_source_name: article.source_name || "", dfja_source_url: article.source_url || "", dfja_image_url: article.image_url || "", dfja_image_credit: article.image_credit || "", dfja_n8n_item_id: article.n8n_item_id || "" } };
-    const endpoint = article.wordpress_post_id ? `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}` : `${wpBase}/wp-json/wp/v2/posts`;
-    const response = await fetch(endpoint, { method: article.wordpress_post_id ? "POST" : "POST", headers: { Authorization: auth, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    if (!response.ok) throw new Error(`publicação WordPress falhou (${response.status})`);
+    let endpoint = article.wordpress_post_id ? `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}` : `${wpBase}/wp-json/wp/v2/posts`;
+    let response = await fetch(endpoint, { method: "POST", headers: { Authorization: auth, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    // An old/stale post id must not permanently block publication. Recreate it once.
+    if (!response.ok && article.wordpress_post_id && response.status === 404) {
+      endpoint = `${wpBase}/wp-json/wp/v2/posts`;
+      response = await fetch(endpoint, { method: "POST", headers: { Authorization: auth, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    }
+    if (!response.ok) throw new Error(await describeWordPressError("publicação WordPress falhou", response));
     const post = await response.json();
     const now = new Date().toISOString();
     const editorialStatus = wpStatus === "draft" ? "pronta_para_publicacao" : "publicada";
