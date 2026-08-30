@@ -271,7 +271,19 @@ export default function AdminPanel() {
         Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({
+        status,
+        title: draft.title,
+        content: draft.content,
+        excerpt: draft.excerpt,
+        image_url: draft.image_url,
+        image_credit: draft.image_credit,
+        source_name: draft.source_name,
+        source_url: draft.source_url,
+        category_id: draft.category_id,
+        author: draft.author,
+        tags: draft.tags || [],
+      }),
     });
     const data = await response.json();
     if (!response.ok) setMessage(data.error || "Falha de publicação.");
