@@ -120,6 +120,34 @@ export async function POST(
           verifiedPost.status || `HTTP ${verification.status}`
         }).`,
       );
+
+    // O feed público usa a API sem autenticação. Confirme também por esse
+    // caminho; se alguma configuração do WordPress ainda expuser o rascunho,
+    // torne-o privado para garantir que não permaneça no site.
+    const publicCheck = await fetch(
+      `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}?_fields=id,status`,
+      { cache: "no-store" },
+    );
+    if (publicCheck.ok) {
+      const publicPost = (await publicCheck.json()) as { status?: string };
+      if (publicPost.status === "publish") {
+        const privateResponse = await fetch(
+          `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: auth,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "private" }),
+          },
+        );
+        if (!privateResponse.ok)
+          throw new Error(
+            `O WordPress ainda expôs a matéria e não permitiu ocultá-la (${privateResponse.status}).`,
+          );
+      }
+    }
     const now = new Date().toISOString();
     const updated = await supabase
       .from("articles")
