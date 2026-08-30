@@ -78,6 +78,7 @@ export async function POST(
     return out;
   }, {});
   const currentArticle = { ...article, ...submitted };
+  let effectiveVersion = Number(article.version || 1);
   if (
     !String(currentArticle.title || "").trim() ||
     !String(currentArticle.content || "").trim()
@@ -89,15 +90,16 @@ export async function POST(
       { status: 400 },
     );
   if (Object.keys(submitted).length) {
+    effectiveVersion += 1;
     const saved = await supabase
       .from("articles")
       .update({
         ...submitted,
         updated_at: new Date().toISOString(),
-        version: Number(article.version || 1) + 1,
+        version: effectiveVersion,
       })
       .eq("id", article.id)
-      .eq("version", article.version)
+      .eq("version", Number(article.version || 1))
       .select("id")
       .single();
     if (saved.error || !saved.data)
@@ -225,7 +227,7 @@ export async function POST(
     const now = new Date().toISOString();
     const editorialStatus =
       wpStatus === "draft" ? "pronta_para_publicacao" : "publicada";
-    await supabase
+    const editorialUpdate = await supabase
       .from("articles")
       .update({
         wordpress_post_id: post.id,
@@ -236,10 +238,14 @@ export async function POST(
         published_at: wpStatus === "draft" ? null : now,
         updated_at: now,
         last_error: null,
-        version: Number(article.version || 1) + 1,
+        version: effectiveVersion + 1,
       })
       .eq("id", article.id)
-      .eq("version", article.version);
+      .eq("version", effectiveVersion);
+    if (editorialUpdate.error)
+      throw new Error(
+        `WordPress publicou, mas o vínculo editorial não foi salvo: ${editorialUpdate.error.message}`,
+      );
     const resultWebhook = process.env.N8N_PWA_RESULT_WEBHOOK_URL;
     if (resultWebhook)
       fetch(resultWebhook, {
