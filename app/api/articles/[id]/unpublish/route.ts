@@ -79,7 +79,7 @@ export async function POST(
   const auth = `Basic ${Buffer.from(`${wpUser}:${wpPassword}`).toString("base64")}`;
   try {
     const response = await fetch(
-      `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}`,
+      `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}?force=false`,
       {
         // DELETE sem force=true envia o post para a lixeira, com restauração
         // disponível no painel do WordPress.
@@ -115,11 +115,18 @@ export async function POST(
     } catch {
       verifiedPost = {};
     }
-    if (!verification.ok || verifiedPost.status !== "trash")
+    // O WordPress pode retornar 404 depois de mover o post para a lixeira;
+    // nesse caso ele já deixou de existir no feed público.
+    if (verification.ok && verifiedPost.status !== "trash")
       throw new Error(
         `WordPress não confirmou a despublicação (status retornado: ${
           verifiedPost.status || `HTTP ${verification.status}`
         }).`,
+      );
+
+    if (!verification.ok && verification.status !== 404)
+      throw new Error(
+        `WordPress não confirmou a ida para a lixeira (HTTP ${verification.status}).`,
       );
 
     // O feed público usa a API sem autenticação; a matéria na lixeira deve
