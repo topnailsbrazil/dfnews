@@ -175,15 +175,22 @@ export async function POST(
         }
       }
     }
+    // O WordPress REST aceita apenas IDs inteiros no campo `tags`.
+    // O PWA pode guardar palavras-chave textuais (ex.: "df"), então
+    // descartamos somente os valores que não são IDs válidos no envio.
+    const wpTagIds = Array.isArray(currentArticle.tags)
+      ? currentArticle.tags
+          .map((tag: unknown) => Number(tag))
+          .filter((tag: number) => Number.isInteger(tag) && tag > 0)
+      : [];
+
     const payload = {
       title: currentArticle.title,
       content: currentArticle.content,
       excerpt: currentArticle.excerpt || "",
       status: wpStatus,
       categories: categoryIds,
-      tags: Array.isArray(currentArticle.tags)
-        ? currentArticle.tags
-        : undefined,
+      tags: wpTagIds.length ? wpTagIds : undefined,
       featured_media: mediaId || undefined,
       meta: {
         dfja_source_name: currentArticle.source_name || "",
