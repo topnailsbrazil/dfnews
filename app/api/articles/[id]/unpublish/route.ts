@@ -81,10 +81,11 @@ export async function POST(
     const response = await fetch(
       `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}?force=false`,
       {
-        // DELETE sem force=true envia o post para a lixeira, com restauração
-        // disponível no painel do WordPress.
-        method: "DELETE",
-        headers: { Authorization: auth },
+        // Atualizar o status para trash envia à lixeira nesta instalação do
+        // WordPress. O DELETE estava sendo interpretado como exclusão final.
+        method: "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "trash" }),
       },
     );
     const responseText = await response.text();
