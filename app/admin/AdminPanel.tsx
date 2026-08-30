@@ -298,6 +298,7 @@ export default function AdminPanel() {
         editorial_status:
           status === "publish" ? "publicada" : "pronta_para_publicacao",
         wordpress_url: data.url,
+        wordpress_post_id: data.id || draft.wordpress_post_id,
         wordpress_media_id: data.mediaId || draft.wordpress_media_id,
       });
     }
