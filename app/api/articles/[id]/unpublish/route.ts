@@ -86,9 +86,40 @@ export async function POST(
         body: JSON.stringify({ status: "draft" }),
       },
     );
+    const responseText = await response.text();
+    let post: { id?: number; link?: string; status?: string } = {};
+    try {
+      post = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      post = {};
+    }
     if (!response.ok)
-      throw new Error(`Despublicação WordPress falhou (${response.status}).`);
-    const post = await response.json();
+      throw new Error(
+        `Despublicação WordPress falhou (${response.status}): ${
+          post && typeof post === "object" && "message" in post
+            ? String((post as { message?: unknown }).message)
+            : responseText.slice(0, 300)
+        }`,
+      );
+
+    // Só confirmamos a operação depois de verificar o estado real do post.
+    const verification = await fetch(
+      `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}?context=edit`,
+      { headers: { Authorization: auth } },
+    );
+    const verificationText = await verification.text();
+    let verifiedPost: { status?: string; link?: string } = {};
+    try {
+      verifiedPost = verificationText ? JSON.parse(verificationText) : {};
+    } catch {
+      verifiedPost = {};
+    }
+    if (!verification.ok || verifiedPost.status !== "draft")
+      throw new Error(
+        `WordPress não confirmou a despublicação (status retornado: ${
+          verifiedPost.status || `HTTP ${verification.status}`
+        }).`,
+      );
     const now = new Date().toISOString();
     const updated = await supabase
       .from("articles")
