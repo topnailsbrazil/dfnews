@@ -351,6 +351,27 @@ export default function AdminPanel() {
     }
     setSaving(false);
   }
+  async function deleteArticle(article: Article) {
+    if (
+      !session ||
+      !window.confirm(
+        `Excluir somente “${article.title}” do painel? O WordPress será preservado.`,
+      )
+    )
+      return;
+    const response = await fetch(`/api/articles/${article.id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setMessage(data.error || "Falha ao excluir a matéria.");
+      return;
+    }
+    if (draft?.id === article.id) setDraft(null);
+    setArticles((current) => current.filter((item) => item.id !== article.id));
+    setMessage("Matéria excluída do painel. O WordPress foi preservado.");
+  }
   if (!session)
     return (
       <main className="admin-shell">
@@ -424,16 +445,35 @@ export default function AdminPanel() {
           />
           <div className="queue-list">
             {filtered.map((article) => (
-              <button
+              <div
                 className={`queue-item ${draft?.id === article.id ? "selected" : ""}`}
                 key={article.id}
-                type="button"
                 onClick={() => select(article)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ")
+                    select(article);
+                }}
               >
-                <strong>{article.title}</strong>
-                <span>{article.source_name || "Fonte não informada"}</span>
-                <em>{labels[article.editorial_status]}</em>
-              </button>
+                <div className="queue-item-copy">
+                  <strong>{article.title}</strong>
+                  <span>{article.source_name || "Fonte não informada"}</span>
+                  <em>{labels[article.editorial_status]}</em>
+                </div>
+                <button
+                  type="button"
+                  className="queue-delete"
+                  aria-label={`Excluir ${article.title}`}
+                  title="Excluir do painel"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deleteArticle(article);
+                  }}
+                >
+                  🗑️
+                </button>
+              </div>
             ))}
             {!filtered.length && (
               <p className="empty-queue">Nenhuma matéria pendente.</p>
