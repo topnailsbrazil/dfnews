@@ -154,10 +154,12 @@ export default function AdminPanel() {
         .eq("id", draft.id)
         .eq("version", draft.version)
         .select(fields)
-        .single();
+        .maybeSingle();
       if (result.error || !result.data)
         setMessage(
-          `Autosave falhou: ${result.error?.message || "conflito de versão; recarregue a matéria"}`,
+          result.error
+            ? `Autosave falhou: ${result.error.message}`
+            : "Autosave não aplicou a alteração porque a matéria mudou. Clique em Atualizar e abra-a novamente.",
         );
       else {
         await supabase.from("article_revisions").insert({
