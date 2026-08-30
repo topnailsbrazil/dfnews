@@ -81,9 +81,10 @@ export async function POST(
     const response = await fetch(
       `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}`,
       {
-        method: "POST",
-        headers: { Authorization: auth, "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "draft" }),
+        // DELETE sem force=true envia o post para a lixeira, com restauração
+        // disponível no painel do WordPress.
+        method: "DELETE",
+        headers: { Authorization: auth },
       },
     );
     const responseText = await response.text();
@@ -114,39 +115,25 @@ export async function POST(
     } catch {
       verifiedPost = {};
     }
-    if (!verification.ok || verifiedPost.status !== "draft")
+    if (!verification.ok || verifiedPost.status !== "trash")
       throw new Error(
         `WordPress não confirmou a despublicação (status retornado: ${
           verifiedPost.status || `HTTP ${verification.status}`
         }).`,
       );
 
-    // O feed público usa a API sem autenticação. Confirme também por esse
-    // caminho; se alguma configuração do WordPress ainda expuser o rascunho,
-    // torne-o privado para garantir que não permaneça no site.
+    // O feed público usa a API sem autenticação; a matéria na lixeira deve
+    // desaparecer desse endpoint.
     const publicCheck = await fetch(
       `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}?_fields=id,status`,
       { cache: "no-store" },
     );
     if (publicCheck.ok) {
       const publicPost = (await publicCheck.json()) as { status?: string };
-      if (publicPost.status === "publish") {
-        const privateResponse = await fetch(
-          `${wpBase}/wp-json/wp/v2/posts/${article.wordpress_post_id}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: auth,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "private" }),
-          },
+      if (publicPost.status === "publish")
+        throw new Error(
+          "O WordPress ainda está expondo a matéria no feed público.",
         );
-        if (!privateResponse.ok)
-          throw new Error(
-            `O WordPress ainda expôs a matéria e não permitiu ocultá-la (${privateResponse.status}).`,
-          );
-      }
     }
     const now = new Date().toISOString();
     const updated = await supabase
