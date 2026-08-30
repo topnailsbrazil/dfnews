@@ -172,6 +172,37 @@ export async function POST(request: NextRequest) {
   } else {
     wordpressError = "Credenciais do WordPress não configuradas no servidor.";
   }
+
+  // O rascunho é criado nesta mesma entrada para que PWA e WordPress nasçam
+  // juntos. Em seguida, informe o n8n com um evento determinístico; assim o
+  // Workflow 05 atualiza a Fila sem criar duplicatas em reentregas.
+  const resultWebhook = process.env.N8N_PWA_RESULT_WEBHOOK_URL;
+  const resultSecret = process.env.N8N_PWA_RESULT_SECRET;
+  if (resultWebhook && resultSecret) {
+    const callbackStatus = wordpress?.id ? "rascunho_wp" : "erro_publicacao";
+    const callback = {
+      event_id: `inbound_draft_${row.n8n_item_id}_${wordpress?.id || "erro"}`,
+      article_id: data?.id || "",
+      n8n_item_id: row.n8n_item_id,
+      approval_token: body.approval_token || "",
+      wordpress_post_id: wordpress?.id || null,
+      wordpress_url: wordpress?.link || null,
+      status: callbackStatus,
+      title: row.title,
+      excerpt: row.excerpt,
+      content: row.content,
+      source_name: row.source_name,
+      source_url: row.source_url,
+      image_url: row.image_url,
+      image_credit: row.image_credit,
+      error: wordpressError || "",
+    };
+    fetch(resultWebhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-dfja-pwa-secret": resultSecret },
+      body: JSON.stringify(callback),
+    }).catch(() => {});
+  }
   return NextResponse.json({
     ok: true,
     article: data,
