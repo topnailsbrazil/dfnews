@@ -131,6 +131,9 @@ export default function AdminPanel() {
   const [coverLogoText, setCoverLogoText] = useState("DFJÁ");
   const [coverSecondImageUrl, setCoverSecondImageUrl] = useState("");
   const [coverLogoFile, setCoverLogoFile] = useState<File | null>(null);
+  const [coverImageScale, setCoverImageScale] = useState(100);
+  const [coverImageX, setCoverImageX] = useState(50);
+  const [coverImageY, setCoverImageY] = useState(50);
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
@@ -430,10 +433,15 @@ export default function AdminPanel() {
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Editor de capa indisponível.");
       const drawCoverImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
-        const scale = Math.max(width / image.width, height / image.height);
+        const scale = Math.max(width / image.width, height / image.height) * (coverImageScale / 100);
         const drawnWidth = image.width * scale;
         const drawnHeight = image.height * scale;
-        context.drawImage(image, x + (width - drawnWidth) / 2, y + (height - drawnHeight) / 2, drawnWidth, drawnHeight);
+        const offsetX = x + (width - drawnWidth) * (coverImageX / 100);
+        const offsetY = y + (height - drawnHeight) * (coverImageY / 100);
+        context.save();
+        context.beginPath(); context.rect(x, y, width, height); context.clip();
+        context.drawImage(image, offsetX, offsetY, drawnWidth, drawnHeight);
+        context.restore();
       };
       const dark = "#050505";
       const opacity = Math.max(0, Math.min(100, coverGradient)) / 100;
@@ -955,11 +963,11 @@ export default function AdminPanel() {
                     >
                       {(coverTemplate === "uol" || coverTemplate === "dividida") ? (
                         <>
-                          <div className="cover-preview-half" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined} />
-                          <div className="cover-preview-half" style={{ backgroundImage: `url(${coverSecondImageUrl.trim() || draft.image_url || ""})` }} />
+                          <div className="cover-preview-half" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})`, backgroundPosition: `${coverImageX}% ${coverImageY}%`, backgroundSize: coverImageScale === 100 ? "cover" : `${coverImageScale}% auto` } : undefined} />
+                          <div className="cover-preview-half" style={{ backgroundImage: `url(${coverSecondImageUrl.trim() || draft.image_url || ""})`, backgroundPosition: `${coverImageX}% ${coverImageY}%`, backgroundSize: coverImageScale === 100 ? "cover" : `${coverImageScale}% auto` }} />
                         </>
                       ) : (
-                        <div className="cover-preview-image" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined} />
+                        <div className="cover-preview-image" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})`, backgroundPosition: `${coverImageX}% ${coverImageY}%`, backgroundSize: coverImageScale === 100 ? "cover" : `${coverImageScale}% auto` } : undefined} />
                       )}
                       <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
                       {coverLogoText.trim() && <span className="cover-preview-logo" style={{ background: coverAccent }}>{coverLogoText.trim().slice(0, 18)}</span>}
@@ -1008,6 +1016,21 @@ export default function AdminPanel() {
                         </select>
                       </label>
                     </div>
+                    <div className="cover-editor-options cover-image-controls">
+                      <label>
+                        Escala: {coverImageScale}%
+                        <input type="range" min="100" max="220" step="1" value={coverImageScale} onChange={(e) => setCoverImageScale(Number(e.target.value))} />
+                      </label>
+                      <label>
+                        Posição horizontal: {coverImageX}%
+                        <input type="range" min="0" max="100" step="1" value={coverImageX} onChange={(e) => setCoverImageX(Number(e.target.value))} />
+                      </label>
+                    </div>
+                    <label>
+                      Posição vertical: {coverImageY}%
+                      <input type="range" min="0" max="100" step="1" value={coverImageY} onChange={(e) => setCoverImageY(Number(e.target.value))} />
+                    </label>
+                    <button type="button" className="cover-reset" onClick={() => { setCoverImageScale(100); setCoverImageX(50); setCoverImageY(50); }}>Reiniciar enquadramento</button>
                     <div className="cover-editor-options">
                       <label>
                         Logo ou selo (texto)

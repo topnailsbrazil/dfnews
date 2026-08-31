@@ -1076,6 +1076,8 @@ button {
 .cover-editor-options { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(130px, .45fr); }
 .cover-editor-options label { gap: 6px; }
 .cover-editor-options input[type="range"] { accent-color: #147d6e; padding: 0; }
+.cover-image-controls { align-items: end; }
+.cover-reset { background: transparent; border: 0; color: #147d6e; cursor: pointer; font-size: 12px; justify-self: start; padding: 0; text-decoration: underline; }
 .cover-generate { justify-self: start; }
 .upload-label input {
   padding: 8px 0;
