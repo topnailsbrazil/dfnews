@@ -109,6 +109,10 @@ export default function AdminPanel() {
   const [publishing, setPublishing] = useState(false);
   const [runningFlow, setRunningFlow] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [coverTitle, setCoverTitle] = useState("");
+  const [coverSubtitle, setCoverSubtitle] = useState("");
+  const [coverGradient, setCoverGradient] = useState(62);
+  const [coverPosition, setCoverPosition] = useState("bottom");
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
@@ -184,6 +188,12 @@ export default function AdminPanel() {
   useEffect(() => {
     if (session) load();
   }, [session]);
+  useEffect(() => {
+    if (draft) {
+      setCoverTitle(draft.title || "DFJÁ");
+      setCoverSubtitle(draft.excerpt || "");
+    }
+  }, [draft?.id]);
   const filtered = useMemo(() => {
     const source = view === "published" ? publishedArticles : articles;
     return source.filter((a) => {
@@ -361,6 +371,75 @@ export default function AdminPanel() {
       setMessage("Imagem vinculada como destaque do WordPress.");
     }
     setSaving(false);
+  }
+  async function createCover() {
+    if (!draft || !session || !draft.image_url) {
+      setMessage("Adicione uma imagem antes de criar a capa.");
+      return;
+    }
+    setSaving(true);
+    setMessage("Gerando a capa editorial…");
+    try {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.src = draft.image_url;
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("A imagem não permite edição no navegador."));
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = 675;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Editor de capa indisponível.");
+      const scale = Math.max(canvas.width / image.width, canvas.height / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+      const opacity = Math.max(0, Math.min(100, coverGradient)) / 100;
+      const gradient = context.createLinearGradient(0, coverPosition === "top" ? 0 : canvas.height, 0, coverPosition === "top" ? canvas.height : 0);
+      gradient.addColorStop(0, `rgba(3, 8, 16, ${opacity})`);
+      gradient.addColorStop(0.62, `rgba(3, 8, 16, ${opacity * 0.42})`);
+      gradient.addColorStop(1, "rgba(3, 8, 16, 0.04)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      const bottom = coverPosition === "top" ? 92 : canvas.height - 72;
+      context.fillStyle = "#ffffff";
+      context.font = "800 48px Arial, sans-serif";
+      context.textBaseline = coverPosition === "top" ? "top" : "bottom";
+      const wrap = (text: string, maxWidth: number) => {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        const lines: string[] = [];
+        let line = "";
+        words.forEach((word) => {
+          const next = line ? `${line} ${word}` : word;
+          if (context.measureText(next).width > maxWidth && line) { lines.push(line); line = word; } else line = next;
+        });
+        if (line) lines.push(line);
+        return lines.slice(0, 4);
+      };
+      const titleLines = wrap(coverTitle || draft.title || "DFJÁ", canvas.width - 120);
+      titleLines.forEach((line, index) => context.fillText(line, 60, coverPosition === "top" ? bottom + index * 56 : bottom - (titleLines.length - 1 - index) * 56));
+      if (coverSubtitle.trim()) {
+        context.font = "500 24px Arial, sans-serif";
+        context.fillStyle = "rgba(255,255,255,.88)";
+        const subtitleY = coverPosition === "top" ? bottom + titleLines.length * 56 + 28 : bottom + 30;
+        context.fillText(coverSubtitle.trim().slice(0, 96), 60, subtitleY);
+      }
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+      if (!blob) throw new Error("Não foi possível exportar a capa.");
+      const body = new FormData();
+      body.append("file", blob, `capa-${draft.id}.jpg`);
+      const result = await fetch(`/api/articles/${draft.id}/image`, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` }, body });
+      const data = await result.json().catch(() => ({}));
+      if (!result.ok || !data.url) throw new Error(data.error || "Falha ao salvar a capa.");
+      update("image_url", data.url);
+      setMessage("Capa criada e vinculada à matéria.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível criar a capa.");
+    } finally {
+      setSaving(false);
+    }
   }
   async function publish(status: "publish" | "draft") {
     if (
@@ -769,6 +848,46 @@ export default function AdminPanel() {
                   {draft.image_url && (
                     <img src={draft.image_url} alt="Pré-visualização" />
                   )}
+                  <div className="cover-editor">
+                    <div className="cover-editor-heading">
+                      <strong>Editor de capa</strong>
+                      <span>Opcional · gera uma nova imagem de destaque</span>
+                    </div>
+                    <div
+                      className={`cover-preview cover-preview-${coverPosition}`}
+                      style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
+                    >
+                      <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
+                      <div className="cover-preview-copy">
+                        <strong>{coverTitle || draft.title || "Título da matéria"}</strong>
+                        {coverSubtitle && <span>{coverSubtitle}</span>}
+                      </div>
+                    </div>
+                    <label>
+                      Título da capa
+                      <input value={coverTitle} onChange={(e) => setCoverTitle(e.target.value)} maxLength={120} />
+                    </label>
+                    <label>
+                      Texto de apoio <span className="field-hint">(opcional)</span>
+                      <input value={coverSubtitle} onChange={(e) => setCoverSubtitle(e.target.value)} maxLength={140} />
+                    </label>
+                    <div className="cover-editor-options">
+                      <label>
+                        Degradê: {coverGradient}%
+                        <input type="range" min="20" max="90" value={coverGradient} onChange={(e) => setCoverGradient(Number(e.target.value))} />
+                      </label>
+                      <label>
+                        Texto
+                        <select value={coverPosition} onChange={(e) => setCoverPosition(e.target.value)}>
+                          <option value="bottom">Embaixo</option>
+                          <option value="top">Em cima</option>
+                        </select>
+                      </label>
+                    </div>
+                    <button type="button" className="secondary-action cover-generate" onClick={createCover} disabled={saving || !draft.image_url}>
+                      {saving ? "Gerando capa…" : "Criar capa e salvar"}
+                    </button>
+                  </div>
                 </div>
                 <div className="editor-actions">
                   <button
