@@ -1562,3 +1562,39 @@ button {
     grid-column: span 2;
   }
 }
+
+/* Desktop workspace: keep the queue and editor side by side on compact laptops.
+   The mobile layout remains unchanged below 768px. */
+@media (min-width: 768px) {
+  .editorial-layout {
+    gap: 16px;
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  }
+
+  .queue-panel {
+    max-height: calc(100dvh - 148px);
+    position: sticky;
+    top: 24px;
+  }
+
+  .queue-heading {
+    flex: 0 0 auto;
+  }
+
+  .queue-tabs {
+    flex: 0 0 auto;
+    min-height: 36px;
+  }
+
+  .queue-list {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@media (min-width: 1100px) {
+  .editorial-layout {
+    gap: 22px;
+    grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
+  }
+}
