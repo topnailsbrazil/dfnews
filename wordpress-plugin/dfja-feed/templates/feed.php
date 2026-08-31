@@ -1,7 +1,7 @@
 <div class="dfja-stage"><div class="dfja-phone"><div id="dfja-feed" class="dfja-feed" aria-label="Feed de notícias DFJÁ">
     <header class="dfja-topbar"><a class="dfja-home-link" href="<?php echo esc_url(home_url('/')); ?>" aria-label="DFJÁ — página inicial"><strong><span>DF</span>JÁ</strong></a><small>A NOTÍCIA NA PALMA DA MÃO</small></header>
     <nav class="dfja-categories" aria-label="Categorias">
-        <button class="dfja-category is-active" data-category="0" type="button">Para você</button>
+        <button class="dfja-category is-active" data-category="0" type="button">Últimas</button>
         <?php foreach ((array) $categories as $category_id => $category_name): ?>
             <button class="dfja-category" data-category="<?php echo esc_attr($category_id); ?>" type="button">
                 <?php echo esc_html($category_name); ?>

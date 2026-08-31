@@ -240,7 +240,7 @@
     const requestId = state.requestId;
     // O feed deve abrir com todas as publicações recentes visíveis. Mantemos
     // paginação para listas maiores, mas nunca limitamos a primeira carga a
-    // cinco cards, que fazia o Para você parecer incompleto.
+    // cinco cards, que fazia a aba Últimas parecer incompleta.
     const pageSize = Math.min(100, Math.max(20, Number(config.postsPerPage) || 20));
     let url = `${config.apiUrl}?_embed&orderby=date&order=desc&per_page=${pageSize}&page=${state.page}&dfja_refresh=${Date.now()}`; if (state.category) url += `&categories=${state.category}`;
     try {
@@ -287,7 +287,7 @@
     loadNextPage();
   }
 
-  document.querySelectorAll('.dfja-category').forEach((button) => button.addEventListener('click', (event) => { event.preventDefault(); const category = button.textContent.trim(); if (category !== 'Para você') { const preferences = readPreferences(); preferences[category] = Math.min(100, Number(preferences[category] || 0) + 2); try { localStorage.setItem(preferenceKey, JSON.stringify(preferences)); } catch (_) {} } document.querySelectorAll('.dfja-category').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active'); resetFeed(Number(button.dataset.category || 0)); }));
+  document.querySelectorAll('.dfja-category').forEach((button) => button.addEventListener('click', (event) => { event.preventDefault(); const category = button.textContent.trim(); if (category !== 'Últimas') { const preferences = readPreferences(); preferences[category] = Math.min(100, Number(preferences[category] || 0) + 2); try { localStorage.setItem(preferenceKey, JSON.stringify(preferences)); } catch (_) {} } document.querySelectorAll('.dfja-category').forEach((item) => item.classList.remove('is-active')); button.classList.add('is-active'); resetFeed(Number(button.dataset.category || 0)); }));
   document.querySelector('.dfja-modal-close')?.addEventListener('click', closeReader);
   window.addEventListener('popstate', () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); document.documentElement.classList.remove('dfja-modal-open'); document.body.classList.remove('dfja-modal-open'); });
   if (sentinel && 'IntersectionObserver' in window) {
