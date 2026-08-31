@@ -50,6 +50,12 @@ const labels: Record<EditorialStatus, string> = {
   devolvida_para_revisao: "Devolvida",
   erro_publicacao: "Erro de publicação",
 };
+const viewLabels = {
+  all: "Fila",
+  new: "Novas",
+  review: "Em revisão",
+  published: "Publicadas",
+} as const;
 const fields =
   "id,title,excerpt,content,image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,wordpress_post_id,wordpress_media_id,last_error,version,updated_at,status,published_at,created_at";
 const FEED_URL = "https://dfja.com.br";
@@ -516,29 +522,31 @@ export default function AdminPanel() {
       <section className="editorial-layout">
         <aside className="queue-panel">
           <div className="queue-heading">
-            <strong>{view === "published" ? "Publicadas" : "Fila"} ({filtered.length})</strong>
-            <button
-              type="button"
-              className="run-flow-action"
-              onClick={runFlow}
-              disabled={runningFlow || saving || publishing}
-              title="Executar a coleta de novas matérias no n8n"
-            >
-              {runningFlow ? "Buscando…" : "Buscar novas"}
-            </button>
-            <button type="button" onClick={newArticle}>
-              Nova matéria
-            </button>
-            <button type="button" onClick={load}>
-              Atualizar
-            </button>
-            <button
-              type="button"
-              onClick={clearPanel}
-              disabled={saving || publishing}
-            >
-              Limpar painel
-            </button>
+            <strong>{viewLabels[view]} ({filtered.length})</strong>
+            <div className="queue-actions">
+              <button
+                type="button"
+                className="run-flow-action"
+                onClick={runFlow}
+                disabled={runningFlow || saving || publishing}
+                title="Executar a coleta de novas matérias no n8n"
+              >
+                {runningFlow ? "Buscando…" : "Buscar novas"}
+              </button>
+              <button type="button" onClick={newArticle}>
+                Nova matéria
+              </button>
+              <button type="button" onClick={load}>
+                Atualizar
+              </button>
+              <button
+                type="button"
+                onClick={clearPanel}
+                disabled={saving || publishing}
+              >
+                Limpar painel
+              </button>
+            </div>
           </div>
           <input
             className="queue-search"
