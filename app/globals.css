@@ -1032,9 +1032,13 @@ button {
   background-size: cover;
   border-radius: 10px;
   display: flex;
+  height: min(620px, 70vh);
   overflow: hidden;
   padding: 16px;
   position: relative;
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
 }
 .cover-preview-image, .cover-preview-half { background-color: #173047; background-position: center; background-repeat: no-repeat; background-size: contain; bottom: auto; height: 55%; inset: 88px 0 auto; position: absolute; }
 .cover-preview-half { width: 50%; }
