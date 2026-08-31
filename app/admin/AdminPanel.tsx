@@ -906,8 +906,15 @@ export default function AdminPanel() {
                     </div>
                     <div
                       className={`cover-preview cover-preview-${coverPosition} cover-preview-${coverTemplate}`}
-                      style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
                     >
+                      {coverTemplate === "dividida" ? (
+                        <>
+                          <div className="cover-preview-half" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined} />
+                          <div className="cover-preview-half" style={{ backgroundImage: `url(${coverSecondImageUrl.trim() || draft.image_url || ""})` }} />
+                        </>
+                      ) : (
+                        <div className="cover-preview-image" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined} />
+                      )}
                       <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
                       {coverLogoText.trim() && <span className="cover-preview-logo" style={{ background: coverAccent }}>{coverLogoText.trim().slice(0, 18)}</span>}
                       <div className="cover-preview-copy">

@@ -1036,10 +1036,17 @@ button {
   padding: 16px;
   position: relative;
 }
+.cover-preview-image, .cover-preview-half { background-color: #173047; background-position: center; background-size: cover; inset: 0; position: absolute; }
+.cover-preview-half { width: 50%; }
+.cover-preview-half + .cover-preview-half { left: 50%; }
 .cover-preview-logo { border-radius: 5px; color: #fff; font-size: 16px; font-weight: 800; left: 16px; padding: 8px 12px; position: absolute; top: 16px; z-index: 1; }
 .cover-preview-top { align-items: flex-start; }
 .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.08), rgba(3,8,16,.95)); inset: 0; position: absolute; }
 .cover-preview-top .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.95), rgba(3,8,16,.08)); }
+.cover-preview-faixa { background: #050505; }
+.cover-preview-faixa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.05), rgba(3,8,16,.15)); height: 58%; }
+.cover-preview-faixa .cover-preview-copy { background: #050505; inset: auto 0 0; max-width: none; padding: 18px 16px 20px; }
+.cover-preview-limpa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.02), rgba(3,8,16,.72)); }
 .cover-preview-copy { color: #fff; display: grid; gap: 6px; max-width: 92%; position: relative; text-shadow: 0 1px 4px rgba(0,0,0,.4); }
 .cover-preview-copy strong { font-size: clamp(18px, 2vw, 27px); line-height: 1.08; }
 .cover-preview-copy span { font-size: 12px; line-height: 1.3; }
