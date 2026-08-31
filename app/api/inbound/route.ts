@@ -13,6 +13,14 @@ export async function POST(request: NextRequest) {
       { status: 503 },
     );
   const body = await request.json();
+  const decision = String(body.decisao || body.decision || "")
+    .trim()
+    .toLowerCase();
+  if (decision !== "aprovar")
+    return NextResponse.json(
+      { error: "Matéria bloqueada: somente itens aprovados no Telegram podem entrar no PWA." },
+      { status: 403 },
+    );
   if (!body.n8n_item_id || !body.title || !body.content)
     return NextResponse.json(
       { error: "n8n_item_id, title e content são obrigatórios." },
