@@ -424,9 +424,10 @@ export default function AdminPanel() {
           logo.onerror = () => reject(new Error("Não foi possível carregar o logo."));
         });
       }
-      // O plugin do feed trabalha com a mídia original em 4:5. O WordPress
-      // registra essa capa em 1200×1500; mantemos a mesma dimensão no arquivo
-      // final para evitar redimensionamento ou crop posterior.
+      // O Feed83 exibe a imagem em uma faixa de largura total com proporção
+      // aproximada de 2:1. A arte é montada no canvas editorial e exportada
+      // nessa proporção para que o plugin não precise cortar nem redimensionar
+      // a capa depois do upload.
       const canvas = document.createElement("canvas");
       canvas.width = 1200;
       canvas.height = 1500;
@@ -524,7 +525,13 @@ export default function AdminPanel() {
         drawTitle(60, coverPosition === "top" ? bottom : bottom - lineCount * 62, canvas.width - 120, "800 54px Arial, sans-serif");
         if (coverSubtitle.trim()) { context.font = "500 25px Arial, sans-serif"; context.fillStyle = "rgba(255,255,255,.88)"; context.fillText(coverSubtitle.trim().slice(0, 110), 60, canvas.height - 62); }
       }
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+      const feedCanvas = document.createElement("canvas");
+      feedCanvas.width = 1200;
+      feedCanvas.height = 600;
+      const feedContext = feedCanvas.getContext("2d");
+      if (!feedContext) throw new Error("Editor de capa indisponível.");
+      feedContext.drawImage(canvas, 0, 0, feedCanvas.width, feedCanvas.height);
+      const blob = await new Promise<Blob | null>((resolve) => feedCanvas.toBlob(resolve, "image/jpeg", 0.9));
       if (!blob) throw new Error("Não foi possível exportar a capa.");
       const body = new FormData();
       body.append("file", blob, `capa-${draft.id}.jpg`);

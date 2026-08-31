@@ -1029,7 +1029,7 @@ button {
 .cover-editor-heading span { color: #82909c; font-size: 11px; }
 .cover-preview {
   align-items: flex-end;
-  aspect-ratio: 399 / 501;
+  aspect-ratio: 2 / 1;
   background-color: #173047;
   background-position: center;
   background-size: cover;
