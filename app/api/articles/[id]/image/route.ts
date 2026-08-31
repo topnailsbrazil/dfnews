@@ -43,7 +43,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
   const media = await response.json();
   const now = new Date().toISOString();
-  const update = await supabase.from("articles").update({ wordpress_media_id: Number(media.id), image_url: media.source_url || null, updated_at: now }).eq("id", article.id);
+  const kind = String(form.get("kind") || "image").toLowerCase() === "cover" ? "cover" : "image";
+  const update = await supabase.from("articles").update(
+    kind === "cover"
+      ? { cover_media_id: Number(media.id), cover_image_url: media.source_url || null, updated_at: now }
+      : { image_url: media.source_url || null, updated_at: now },
+  ).eq("id", article.id);
   if (update.error) return NextResponse.json({ error: `Imagem enviada, mas não foi vinculada à matéria: ${update.error.message}` }, { status: 502 });
-  return NextResponse.json({ ok: true, mediaId: Number(media.id), url: media.source_url || null });
+  return NextResponse.json({ ok: true, mediaId: Number(media.id), url: media.source_url || null, kind });
 }

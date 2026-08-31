@@ -21,6 +21,7 @@ type Article = {
   excerpt: string | null;
   content: string;
   image_url: string | null;
+  cover_image_url?: string | null;
   image_credit: string | null;
   source_name: string | null;
   source_url: string | null;
@@ -31,6 +32,7 @@ type Article = {
   wordpress_url: string | null;
   wordpress_post_id?: number | null;
   wordpress_media_id?: number | null;
+  cover_media_id?: number | null;
   last_error: string | null;
   version: number;
   updated_at: string;
@@ -57,7 +59,7 @@ const viewLabels = {
   published: "Publicadas",
 } as const;
 const fields =
-  "id,title,excerpt,content,image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,wordpress_post_id,wordpress_media_id,last_error,version,updated_at,status,published_at,created_at";
+  "id,title,excerpt,content,image_url,cover_image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,wordpress_post_id,wordpress_media_id,cover_media_id,last_error,version,updated_at,status,published_at,created_at";
 const FEED_URL = "https://dfja.com.br";
 const CATEGORY_TAG_PREFIX = "__dfja_category:";
 
@@ -76,6 +78,9 @@ function categoryIds(article: Article | null) {
 
 function visibleTags(tags: string[] | null | undefined) {
   return (tags || []).filter((tag) => !tag.startsWith(CATEGORY_TAG_PREFIX));
+}
+function displayImage(article: Article) {
+  return article.cover_image_url || article.image_url;
 }
 
 function isPublished(article: Article) {
@@ -478,10 +483,11 @@ export default function AdminPanel() {
       if (!blob) throw new Error("Não foi possível exportar a capa.");
       const body = new FormData();
       body.append("file", blob, `capa-${draft.id}.jpg`);
+      body.append("kind", "cover");
       const result = await fetch(`/api/articles/${draft.id}/image`, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` }, body });
       const data = await result.json().catch(() => ({}));
       if (!result.ok || !data.url) throw new Error(data.error || "Falha ao salvar a capa.");
-      setDraft((current) => current ? { ...current, image_url: data.url, wordpress_media_id: data.mediaId || current.wordpress_media_id } : current);
+      setDraft((current) => current ? { ...current, cover_image_url: data.url, cover_media_id: data.mediaId || current.cover_media_id } : current);
       setMessage("Capa criada e vinculada à matéria.");
       URL.revokeObjectURL(primary.objectUrl);
       if (secondary) URL.revokeObjectURL(secondary.objectUrl);
@@ -729,8 +735,8 @@ export default function AdminPanel() {
                     select(article);
                 }}
               >
-                {article.image_url ? (
-                  <img className="queue-thumb" src={article.image_url} alt="" />
+                {displayImage(article) ? (
+                  <img className="queue-thumb" src={displayImage(article) || ""} alt="" />
                 ) : (
                   <div className="queue-thumb queue-thumb-fallback">DFJÁ</div>
                 )}
@@ -1034,8 +1040,8 @@ export default function AdminPanel() {
                 <div className="published-gallery">
                   {publishedArticles.slice(0, 12).map((article) => (
                     <button type="button" key={article.id} onClick={() => select(article)}>
-                      {article.image_url ? (
-                        <img src={article.image_url} alt="" />
+                      {displayImage(article) ? (
+                        <img src={displayImage(article) || ""} alt="" />
                       ) : (
                         <span>DFJÁ</span>
                       )}

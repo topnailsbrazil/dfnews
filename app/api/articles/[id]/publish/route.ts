@@ -67,6 +67,7 @@ export async function POST(
     "content",
     "excerpt",
     "image_url",
+    "cover_image_url",
     "image_credit",
     "source_name",
     "source_url",
@@ -118,7 +119,7 @@ export async function POST(
       url: article.wordpress_url,
       idempotent: true,
     });
-  if (!currentArticle.image_url && !currentArticle.wordpress_media_id)
+  if (!currentArticle.image_url && !currentArticle.cover_image_url && !currentArticle.wordpress_media_id && !currentArticle.cover_media_id)
     return NextResponse.json(
       {
         error:
@@ -128,10 +129,10 @@ export async function POST(
     );
 
   const auth = `Basic ${Buffer.from(`${wpUser}:${wpPassword}`).toString("base64")}`;
-  let mediaId = currentArticle.wordpress_media_id || 0;
+  let mediaId = currentArticle.cover_media_id || currentArticle.wordpress_media_id || 0;
   try {
-    if (!mediaId && currentArticle.image_url) {
-      const imageResponse = await fetch(String(currentArticle.image_url));
+    if (!mediaId && (currentArticle.cover_image_url || currentArticle.image_url)) {
+      const imageResponse = await fetch(String(currentArticle.cover_image_url || currentArticle.image_url));
       if (!imageResponse.ok)
         throw new Error(`imagem indisponível (${imageResponse.status})`);
       const imageBuffer = await imageResponse.arrayBuffer();
@@ -240,6 +241,7 @@ export async function POST(
       .update({
         wordpress_post_id: post.id,
         wordpress_media_id: mediaId || null,
+        cover_media_id: mediaId || null,
         wordpress_url: post.link,
         editorial_status: editorialStatus,
         status: wpStatus === "draft" ? "draft" : "published",
@@ -278,6 +280,7 @@ export async function POST(
           author: article.author,
           tags: article.tags || [],
           image_url: article.image_url,
+          cover_image_url: article.cover_image_url,
           image_credit: article.image_credit,
           source_name: article.source_name,
           source_url: article.source_url,
