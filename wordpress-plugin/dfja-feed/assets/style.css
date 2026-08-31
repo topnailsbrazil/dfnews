@@ -13,7 +13,7 @@
 .dfja-card::before { background: radial-gradient(circle at 72% 18%, rgba(38,164,171,.42), transparent 42%), linear-gradient(145deg, rgba(6,20,39,.86), rgba(10,48,70,.5) 48%, rgba(2,7,15,.94)); content: ""; inset: 0; position: absolute; z-index: 1; }
 .dfja-card-shade { background: linear-gradient(180deg, rgba(2,7,15,.18) 0%, rgba(3,8,16,.42) 42%, rgba(3,8,16,.97) 88%); inset: 0; position: absolute; z-index: 2; }
 .slide-img-container { align-items: center; display: flex; inset: 0; justify-content: center; overflow: hidden; padding-bottom: 80px; position: absolute; z-index: 1; }
-.slide-img-center { border-radius: 0; height: auto; max-height: 70%; max-width: 100%; object-fit: contain; width: auto; }
+.slide-img-center { aspect-ratio: 4 / 5; border-radius: 0; height: auto; max-height: 70%; max-width: 100%; object-fit: contain; width: auto; }
 .slide-gradient { background: linear-gradient(180deg, rgba(3,8,16,.08) 18%, rgba(3,8,16,.34) 50%, rgba(3,8,16,.96) 88%); }
 .dfja-card-content { align-self: end; max-width: 760px; position: relative; width: 100%; z-index: 3; }
 .dfja-card-meta { color: #55d6be; font-size: 12px; font-weight: 700; text-transform: uppercase; }

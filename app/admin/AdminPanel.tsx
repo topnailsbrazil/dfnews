@@ -413,11 +413,12 @@ export default function AdminPanel() {
           logo.onerror = () => reject(new Error("Não foi possível carregar o logo."));
         });
       }
-      // Formato editorial das capas de referência: 399 × 501 (proporção
-      // preservada no arquivo final e no feed, sem depender do crop do WP).
+      // O plugin do feed trabalha com a mídia original em 4:5. O WordPress
+      // registra essa capa em 1200×1500; mantemos a mesma dimensão no arquivo
+      // final para evitar redimensionamento ou crop posterior.
       const canvas = document.createElement("canvas");
-      canvas.width = 1197;
-      canvas.height = 1503;
+      canvas.width = 1200;
+      canvas.height = 1500;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Editor de capa indisponível.");
       const drawCoverImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
@@ -443,12 +444,14 @@ export default function AdminPanel() {
           context.drawImage(logo, x, y, logoWidth, logoHeight);
           return;
         }
+        const defaultBrand = coverTemplate === "cbn" ? "CBN" : coverTemplate === "uol" ? "UOL" : coverTemplate === "metropoles" ? "Metrópoles" : "DFJÁ";
+        const brand = coverLogoText.trim() === "DFJÁ" || !coverLogoText.trim() ? defaultBrand : coverLogoText.trim();
         context.fillStyle = fill;
         context.fillRect(x, y, 215, 76);
         context.fillStyle = white ? "#fff" : "#111";
         context.font = "800 40px Arial, sans-serif";
         context.textBaseline = "middle";
-        context.fillText(coverLogoText.trim().slice(0, 18) || "DFJÁ", x + 18, y + 39);
+        context.fillText(brand.slice(0, 18), x + 18, y + 39);
       };
       const wrap = (text: string, maxWidth: number) => {
         const words = text.trim().split(/\s+/).filter(Boolean);
@@ -485,12 +488,17 @@ export default function AdminPanel() {
         drawGradient(false);
         drawLogo(48, 48, "#e3262e");
         drawTitle(60, canvas.height - 390, canvas.width - 120, "800 48px Georgia, serif");
-      } else if (coverTemplate === "metropoles" || coverTemplate === "faixa") {
+      } else if (coverTemplate === "metropoles" || coverTemplate === "faixa" || coverTemplate === "noticia") {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height * 0.60);
         context.fillStyle = dark; context.fillRect(0, canvas.height * 0.57, canvas.width, canvas.height * 0.43);
         drawLogo(60, canvas.height * 0.64, "#e3262e");
-        drawTitle(canvas.width / 2, canvas.height * 0.73, canvas.width - 120, "800 47px Georgia, serif", "#fff", "center");
-        context.font = "500 25px Arial, sans-serif"; context.textAlign = "center"; context.fillStyle = "#fff"; context.fillText(coverSubtitle.trim().slice(0, 80) || "@DFJA", canvas.width / 2, canvas.height - 80); context.textAlign = "left";
+        drawTitle(coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height * 0.73, canvas.width - 120, "800 47px Georgia, serif", "#fff", coverTemplate === "noticia" ? "left" : "center");
+        context.font = "500 25px Arial, sans-serif"; context.textAlign = coverTemplate === "noticia" ? "left" : "center"; context.fillStyle = "#fff"; context.fillText(coverSubtitle.trim().slice(0, 80) || "@DFJA", coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height - 80); context.textAlign = "left";
+      } else if (coverTemplate === "g1") {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
+        drawGradient(false, "0, 0, 0");
+        drawLogo(48, 48, "#147d6e");
+        drawTitle(60, canvas.height - 390, canvas.width - 120, "800 50px Arial, sans-serif");
       } else {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
         drawGradient(coverPosition === "top");
@@ -961,6 +969,8 @@ export default function AdminPanel() {
                           <option value="uol">Dividida — pesquisa</option>
                           <option value="cbn">Selo vermelho — manchete</option>
                           <option value="metropoles">Bloco preto — editorial</option>
+                          <option value="noticia">Painel inferior — notícia</option>
+                          <option value="g1">Manchete limpa — foto inteira</option>
                           <option value="urgente">Urgente</option>
                           <option value="limpa">Limpa</option>
                         </select>
