@@ -34,6 +34,9 @@ type Article = {
   last_error: string | null;
   version: number;
   updated_at: string;
+  status?: string | null;
+  published_at?: string | null;
+  created_at?: string | null;
 };
 const labels: Record<EditorialStatus, string> = {
   coletada: "Coletada",
@@ -48,8 +51,40 @@ const labels: Record<EditorialStatus, string> = {
   erro_publicacao: "Erro de publicação",
 };
 const fields =
-  "id,title,excerpt,content,image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,wordpress_post_id,wordpress_media_id,last_error,version,updated_at";
+  "id,title,excerpt,content,image_url,image_credit,source_name,source_url,category_id,author,tags,editorial_status,wordpress_url,wordpress_post_id,wordpress_media_id,last_error,version,updated_at,status,published_at,created_at";
 const FEED_URL = "https://dfja.com.br";
+const CATEGORY_TAG_PREFIX = "__dfja_category:";
+
+function categoryIds(article: Article | null) {
+  if (!article) return [];
+  return Array.from(
+    new Set([
+      ...(article.category_id ? [article.category_id] : []),
+      ...(article.tags || [])
+        .filter((tag) => tag.startsWith(CATEGORY_TAG_PREFIX))
+        .map((tag) => tag.slice(CATEGORY_TAG_PREFIX.length))
+        .filter(Boolean),
+    ]),
+  );
+}
+
+function visibleTags(tags: string[] | null | undefined) {
+  return (tags || []).filter((tag) => !tag.startsWith(CATEGORY_TAG_PREFIX));
+}
+
+function isPublished(article: Article) {
+  return article.status === "published" || article.editorial_status === "publicada";
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
 
 export default function AdminPanel() {
   const [session, setSession] = useState<{
@@ -59,12 +94,14 @@ export default function AdminPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [articles, setArticles] = useState<Article[]>([]);
+  const [publishedArticles, setPublishedArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [draft, setDraft] = useState<Article | null>(null);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
       ({ data }) =>
@@ -84,7 +121,7 @@ export default function AdminPanel() {
     return () => listener.data.subscription.unsubscribe();
   }, []);
   async function load() {
-    const [a, c] = await Promise.all([
+    const [a, c, p] = await Promise.all([
       supabase
         .from("articles")
         .select(fields)
@@ -92,22 +129,43 @@ export default function AdminPanel() {
         .order("updated_at", { ascending: false })
         .limit(200),
       fetch("/api/categories").then((r) => (r.ok ? r.json() : [])),
+      supabase
+        .from("articles")
+        .select(fields)
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(60),
     ]);
     if (a.error) setMessage(a.error.message);
     else setArticles((a.data || []) as Article[]);
+    if (!p.error) setPublishedArticles((p.data || []) as Article[]);
     setCategories(Array.isArray(c) ? c : []);
   }
   useEffect(() => {
     if (session) load();
   }, [session]);
-  const filtered = useMemo(
-    () =>
-      articles.filter((a) =>
-        `${a.title} ${a.source_name || ""} ${a.id} ${a.editorial_status}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-      ),
-    [articles, query],
+  const filtered = useMemo(() => {
+    const source = view === "published" ? publishedArticles : articles;
+    return source.filter((a) => {
+      const matchesQuery = `${a.title} ${a.source_name || ""} ${a.id} ${a.editorial_status}`
+        .toLowerCase()
+        .includes(query.toLowerCase());
+      const matchesView =
+        view === "all" ||
+        (view === "published" && isPublished(a)) ||
+        (view === "new" && ["coletada", "enviada_whatsapp", "aprovada_para_ia"].includes(a.editorial_status)) ||
+        (view === "review" && !isPublished(a) && !["coletada", "enviada_whatsapp", "aprovada_para_ia"].includes(a.editorial_status));
+      return matchesQuery && matchesView;
+    });
+  }, [articles, publishedArticles, query, view]);
+  const counts = useMemo(
+    () => ({
+      all: articles.length,
+      new: articles.filter((a) => ["coletada", "enviada_whatsapp", "aprovada_para_ia"].includes(a.editorial_status)).length,
+      review: articles.filter((a) => !isPublished(a) && !["coletada", "enviada_whatsapp", "aprovada_para_ia"].includes(a.editorial_status)).length,
+      published: publishedArticles.length,
+    }),
+    [articles, publishedArticles],
   );
   async function select(article: Article) {
     const claim = await supabase.rpc("claim_article", {
@@ -127,6 +185,16 @@ export default function AdminPanel() {
   }
   function update(field: keyof Article, value: string | string[]) {
     setDraft((current) => (current ? { ...current, [field]: value } : current));
+  }
+  function updateCategories(ids: string[]) {
+    if (!draft) return;
+    const nextIds = Array.from(new Set(ids));
+    const tags = visibleTags(draft.tags);
+    setDraft({
+      ...draft,
+      category_id: nextIds[0] || null,
+      tags: [...nextIds.map((id) => `${CATEGORY_TAG_PREFIX}${id}`), ...tags],
+    });
   }
   useEffect(() => {
     if (!draft || !session) return;
@@ -283,6 +351,7 @@ export default function AdminPanel() {
         source_name: draft.source_name,
         source_url: draft.source_url,
         category_id: draft.category_id,
+        category_ids: categoryIds(draft),
         author: draft.author,
         tags: draft.tags || [],
       }),
@@ -416,6 +485,7 @@ export default function AdminPanel() {
           <p>Revisão, imagem e publicação</p>
         </div>
         <nav>
+          <a href="/admin/operacao">Operação</a>
           <a href={FEED_URL}>Ver feed</a>
           <button type="button" onClick={() => supabase.auth.signOut()}>
             Sair
@@ -425,7 +495,7 @@ export default function AdminPanel() {
       <section className="editorial-layout">
         <aside className="queue-panel">
           <div className="queue-heading">
-            <strong>Fila ({filtered.length})</strong>
+            <strong>{view === "published" ? "Publicadas" : "Fila"} ({filtered.length})</strong>
             <button type="button" onClick={newArticle}>
               Nova matéria
             </button>
@@ -446,6 +516,25 @@ export default function AdminPanel() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          <div className="queue-tabs" role="tablist" aria-label="Filtrar matérias">
+            {([
+              ["all", "Todas", counts.all],
+              ["new", "Novas", counts.new],
+              ["review", "Em revisão", counts.review],
+              ["published", "Publicadas", counts.published],
+            ] as const).map(([key, label, count]) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === key}
+                className={view === key ? "active" : ""}
+                key={key}
+                onClick={() => setView(key)}
+              >
+                {label}<span>{count}</span>
+              </button>
+            ))}
+          </div>
           <div className="queue-list">
             {filtered.map((article) => (
               <div
@@ -459,10 +548,19 @@ export default function AdminPanel() {
                     select(article);
                 }}
               >
+                {article.image_url ? (
+                  <img className="queue-thumb" src={article.image_url} alt="" />
+                ) : (
+                  <div className="queue-thumb queue-thumb-fallback">DFJÁ</div>
+                )}
                 <div className="queue-item-copy">
+                  <div className="queue-status-line">
+                    <span className={`status-dot ${isPublished(article) ? "published" : ""}`} />
+                    <em>{isPublished(article) ? "Publicada" : labels[article.editorial_status]}</em>
+                  </div>
                   <strong>{article.title}</strong>
                   <span>{article.source_name || "Fonte não informada"}</span>
-                  <em>{labels[article.editorial_status]}</em>
+                  <small>{formatDate(article.published_at || article.updated_at)}</small>
                 </div>
                 <button
                   type="button"
@@ -511,32 +609,49 @@ export default function AdminPanel() {
                       onChange={(e) => update("author", e.target.value)}
                     />
                   </label>
-                  <label>
-                    Categoria
-                    <select
-                      value={draft.category_id || ""}
-                      onChange={(e) => update("category_id", e.target.value)}
-                    >
-                      <option value="">Selecionar categoria</option>
-                      {categories.map((c) => (
-                        <option value={c.id} key={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="category-field">
+                    <span className="field-label">Categorias</span>
+                    <div className="category-options">
+                      {categories.map((c) => {
+                        const selected = categoryIds(draft).includes(c.id);
+                        return (
+                          <button
+                            type="button"
+                            className={selected ? "selected" : ""}
+                            aria-pressed={selected}
+                            key={c.id}
+                            onClick={() =>
+                              updateCategories(
+                                selected
+                                  ? categoryIds(draft).filter((id) => id !== c.id)
+                                  : [...categoryIds(draft), c.id],
+                              )
+                            }
+                          >
+                            {selected ? "✓ " : ""}{c.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <small className="field-hint">A primeira selecionada é a principal no WordPress.</small>
+                  </div>
                 </div>
                 <label>
                   Tags (separadas por vírgula)
                   <input
-                    value={(draft.tags || []).join(", ")}
+                    value={visibleTags(draft.tags).join(", ")}
                     onChange={(e) =>
                       update(
                         "tags",
-                        e.target.value
-                          .split(",")
-                          .map((tag) => tag.trim())
-                          .filter(Boolean),
+                        [
+                          ...(draft.tags || []).filter((tag) =>
+                            tag.startsWith(CATEGORY_TAG_PREFIX),
+                          ),
+                          ...e.target.value
+                            .split(",")
+                            .map((tag) => tag.trim())
+                            .filter(Boolean),
+                        ],
                       )
                     }
                   />
@@ -649,11 +764,26 @@ export default function AdminPanel() {
             </>
           ) : (
             <div className="editor-empty">
-              <h2>Selecione uma matéria</h2>
+              <h2>{view === "published" ? "Feed de publicadas" : "Selecione uma matéria"}</h2>
               <p>
-                As alterações são salvas automaticamente e a publicação exige
-                confirmação.
+                {view === "published"
+                  ? "Acompanhe as matérias já publicadas e abra qualquer uma para revisar seus dados."
+                  : "As alterações são salvas automaticamente e a publicação exige confirmação."}
               </p>
+              {view === "published" && (
+                <div className="published-gallery">
+                  {publishedArticles.slice(0, 12).map((article) => (
+                    <button type="button" key={article.id} onClick={() => select(article)}>
+                      {article.image_url ? (
+                        <img src={article.image_url} alt="" />
+                      ) : (
+                        <span>DFJÁ</span>
+                      )}
+                      <strong>{article.title}</strong>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>

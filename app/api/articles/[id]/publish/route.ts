@@ -156,25 +156,33 @@ export async function POST(
       mediaId = Number((await mediaResponse.json()).id);
     }
     let categoryIds: number[] | undefined;
-    if (currentArticle.category_id) {
-      const { data: category } = await supabase
+    const requestedCategoryIds = Array.isArray(requestBody.category_ids)
+      ? requestBody.category_ids.filter((id: unknown) => typeof id === "string")
+      : currentArticle.category_id
+        ? [currentArticle.category_id]
+        : [];
+    if (requestedCategoryIds.length) {
+      const { data: categories } = await supabase
         .from("categories")
         .select("name")
-        .eq("id", currentArticle.category_id)
-        .single();
-      if (category?.name) {
+        .in("id", requestedCategoryIds);
+      const wpCategoryIds: number[] = [];
+      for (const category of categories || []) {
+        if (!category.name) continue;
         const categoryResponse = await fetch(
           `${wpBase}/wp-json/wp/v2/categories?search=${encodeURIComponent(category.name)}&per_page=20`,
           { headers: { Authorization: auth } },
         );
-        if (categoryResponse.ok) {
-          const matches = await categoryResponse.json();
-          const exact = matches.find(
-            (item: { name?: string }) =>
-              item.name?.toLowerCase() === category.name.toLowerCase(),
-          );
-          if (exact?.id) categoryIds = [Number(exact.id)];
-        }
+        if (!categoryResponse.ok) continue;
+        const matches = await categoryResponse.json();
+        const exact = matches.find(
+          (item: { name?: string }) =>
+            item.name?.toLowerCase() === category.name.toLowerCase(),
+        );
+        if (exact?.id) wpCategoryIds.push(Number(exact.id));
+      }
+      if (wpCategoryIds.length) {
+        categoryIds = Array.from(new Set(wpCategoryIds));
       }
     }
     // O WordPress REST aceita apenas IDs inteiros no campo `tags`.
