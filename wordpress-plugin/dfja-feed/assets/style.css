@@ -106,11 +106,11 @@
   .dfja-modal-body, .dfja-comments, .dfja-comment-list, .dfja-comments textarea { max-width: 100%; width: 100%; }
   .dfja-comments textarea { box-sizing: border-box; }
 
-  /* Composição Feed83 no celular: imagem em uma faixa própria e conteúdo
-     abaixo, evitando que manchetes longas sejam desenhadas sobre a foto. */
-  .slide-img-container { bottom: 51%; inset-inline: 0; padding-bottom: 0; top: 126px; }
-  .slide-img-center { max-height: 100%; max-width: 100%; width: 100%; }
-  .dfja-card-content { bottom: 24px; left: clamp(18px, 6vw, 24px); max-height: 47%; max-width: none; overflow: hidden; position: absolute; right: clamp(64px, 18vw, 76px); width: auto; }
+  /* Padrão original do Feed83: a imagem ocupa a faixa prevista pelo feed;
+     a capa gerada é apenas outra fonte de imagem, sem alterar a composição. */
+  .slide-img-container { bottom: 43%; inset-inline: 0; padding-bottom: 0; top: 126px; }
+  .slide-img-center { max-height: 100%; width: 100%; }
+  .dfja-card-content { max-width: 100%; }
 }
 
 /* Em tablets e computadores, use uma área de leitura mais larga. Isso
@@ -127,15 +127,12 @@
   .dfja-categories { padding: 78px 20px 16px; }
 }
 
-/* Desktop only: keep the tablet/mobile presentation untouched, but give
-   wide screens a responsive reading composition. The image occupies its
-   own upper region and the text gets a bounded area below it, preventing
-   long headlines from covering the image or overflowing the card. */
+/* Desktop: composição original do Feed83. */
 @media (min-width: 1200px) {
   .dfja-phone { width: min(680px, calc(100% - 48px), calc((100svh - 48px) * 4 / 5)); }
   .dfja-card { padding: 126px 88px 30px 30px; }
-  .slide-img-container { aspect-ratio: 4 / 5; bottom: auto; height: auto; inset-inline: 0; padding-bottom: 0; top: 0; }
-  .slide-img-center { height: auto; max-height: none; max-width: 100%; width: 100%; }
+  .slide-img-container { bottom: 43%; height: 40%; inset-inline: 0; padding-bottom: 0; top: auto; }
+  .slide-img-center { max-height: 100%; width: 100%; }
   .dfja-card-content { max-width: 100%; }
   .dfja-card h2 { font-size: clamp(24px, 1.7vw, 30px); line-height: 1.08; margin: 8px 0 10px; }
   .dfja-card p { font-size: clamp(15px, 1.05vw, 17px); line-height: 1.4; }

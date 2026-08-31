@@ -2,13 +2,13 @@
 /**
  * Plugin Name: DFJÁ Feed
  * Description: Feed vertical mobile-first para notícias do Distrito Federal e Entorno.
- * Version: 0.9.7
+ * Version: 0.9.8
  * Author: DFJÁ
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('DFJA_FEED_VERSION', '0.9.7');
+define('DFJA_FEED_VERSION', '0.9.8');
 define('DFJA_FEED_FILE', __FILE__);
 define('DFJA_FEED_DIR', plugin_dir_path(__FILE__));
 define('DFJA_FEED_URL', plugin_dir_url(__FILE__));
