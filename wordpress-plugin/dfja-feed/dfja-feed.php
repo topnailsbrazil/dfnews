@@ -8,7 +8,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('DFJA_FEED_VERSION', '0.8.8');
+define('DFJA_FEED_VERSION', '0.8.9');
 define('DFJA_FEED_FILE', __FILE__);
 define('DFJA_FEED_DIR', plugin_dir_path(__FILE__));
 define('DFJA_FEED_URL', plugin_dir_url(__FILE__));

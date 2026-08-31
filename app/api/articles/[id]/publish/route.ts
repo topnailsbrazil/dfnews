@@ -112,7 +112,11 @@ export async function POST(
         { status: 409 },
       );
   }
-  if (article.wordpress_post_id && article.editorial_status === "publicada")
+  const hasNewCover = Boolean(
+    currentArticle.cover_media_id &&
+    Number(currentArticle.cover_media_id) !== Number(article.wordpress_media_id || 0),
+  );
+  if (article.wordpress_post_id && article.editorial_status === "publicada" && !hasNewCover)
     return NextResponse.json({
       ok: true,
       id: article.wordpress_post_id,
