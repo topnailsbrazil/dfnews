@@ -101,6 +101,7 @@ export default function AdminPanel() {
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [runningFlow, setRunningFlow] = useState(false);
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
@@ -140,6 +141,26 @@ export default function AdminPanel() {
     else setArticles((a.data || []) as Article[]);
     if (!p.error) setPublishedArticles((p.data || []) as Article[]);
     setCategories(Array.isArray(c) ? c : []);
+  }
+  async function runFlow() {
+    if (runningFlow) return;
+    setRunningFlow(true);
+    setMessage("Disparando a busca de novas matérias…");
+    try {
+      const response = await fetch("/api/operations/run-flow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "pwa-editorial" }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `O n8n respondeu ${response.status}.`);
+      setMessage("Busca disparada. A fila será atualizada em alguns segundos.");
+      window.setTimeout(() => load(), 1800);
+    } catch (error) {
+      setMessage(`Não foi possível iniciar a busca: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+    } finally {
+      setRunningFlow(false);
+    }
   }
   useEffect(() => {
     if (session) load();
@@ -496,6 +517,15 @@ export default function AdminPanel() {
         <aside className="queue-panel">
           <div className="queue-heading">
             <strong>{view === "published" ? "Publicadas" : "Fila"} ({filtered.length})</strong>
+            <button
+              type="button"
+              className="run-flow-action"
+              onClick={runFlow}
+              disabled={runningFlow || saving || publishing}
+              title="Executar a coleta de novas matérias no n8n"
+            >
+              {runningFlow ? "Buscando…" : "Buscar novas"}
+            </button>
             <button type="button" onClick={newArticle}>
               Nova matéria
             </button>

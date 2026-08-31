@@ -781,6 +781,14 @@ button {
   font-weight: 700;
   padding: 7px 10px;
 }
+.queue-heading .run-flow-action {
+  background: #147d6e;
+  color: #fff;
+}
+.queue-heading .run-flow-action:disabled {
+  cursor: wait;
+  opacity: .6;
+}
 .queue-search {
   border: 1px solid #cbd5df;
   border-radius: 9px;
