@@ -83,6 +83,14 @@ function displayImage(article: Article) {
   return article.cover_image_url || article.image_url;
 }
 
+function coverTitleFor(template: string, value: string) {
+  const limit = template === "uol" || template === "cbn" ? 72 : template === "metropoles" || template === "noticia" ? 68 : 88;
+  const clean = value.trim();
+  if (clean.length <= limit) return clean;
+  const shortened = clean.slice(0, limit - 1).replace(/\s+\S*$/, "");
+  return `${shortened || clean.slice(0, limit - 1)}…`;
+}
+
 function isPublished(article: Article) {
   return article.status === "published" || article.editorial_status === "publicada";
 }
@@ -464,8 +472,7 @@ export default function AdminPanel() {
         if (line) lines.push(line);
         return lines.slice(0, 4);
       };
-      const title = coverTitle || draft.title || "DFJÁ";
-      const titleLines = wrap(title, canvas.width - 120);
+      const title = coverTitleFor(coverTemplate, coverTitle || draft.title || "DFJÁ");
       const drawTitle = (x: number, y: number, maxWidth: number, font: string, color = "#fff", align: CanvasTextAlign = "left") => {
         context.fillStyle = color;
         context.font = font;
@@ -504,7 +511,9 @@ export default function AdminPanel() {
         drawGradient(coverPosition === "top");
         drawLogo(48, 44);
         const bottom = coverPosition === "top" ? 160 : canvas.height - 130;
-        drawTitle(60, coverPosition === "top" ? bottom : bottom - titleLines.length * 62, canvas.width - 120, "800 54px Arial, sans-serif");
+        context.font = "800 54px Arial, sans-serif";
+        const lineCount = wrap(title, canvas.width - 120).length;
+        drawTitle(60, coverPosition === "top" ? bottom : bottom - lineCount * 62, canvas.width - 120, "800 54px Arial, sans-serif");
         if (coverSubtitle.trim()) { context.font = "500 25px Arial, sans-serif"; context.fillStyle = "rgba(255,255,255,.88)"; context.fillText(coverSubtitle.trim().slice(0, 110), 60, canvas.height - 62); }
       }
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
@@ -941,7 +950,7 @@ export default function AdminPanel() {
                     <div
                       className={`cover-preview cover-preview-${coverPosition} cover-preview-${coverTemplate}`}
                     >
-                      {coverTemplate === "dividida" ? (
+                      {(coverTemplate === "uol" || coverTemplate === "dividida") ? (
                         <>
                           <div className="cover-preview-half" style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined} />
                           <div className="cover-preview-half" style={{ backgroundImage: `url(${coverSecondImageUrl.trim() || draft.image_url || ""})` }} />
@@ -952,13 +961,8 @@ export default function AdminPanel() {
                       <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
                       {coverLogoText.trim() && <span className="cover-preview-logo" style={{ background: coverAccent }}>{coverLogoText.trim().slice(0, 18)}</span>}
                       <div className="cover-preview-copy">
-                        <strong>{coverTitle || draft.title || "Título da matéria"}</strong>
+                        <strong>{coverTitleFor(coverTemplate, coverTitle || draft.title || "Título da matéria")}</strong>
                         {coverSubtitle && <span>{coverSubtitle}</span>}
-                      </div>
-                      <div className="cover-preview-feed-copy">
-                        <span>DFJÁ · {draft.author || "Redação"}</span>
-                        <strong>{draft.title || "Título da matéria"}</strong>
-                        <p>{draft.excerpt || "Resumo da matéria exibido no feed."}</p>
                       </div>
                     </div>
                     <div className="cover-editor-options">
@@ -982,7 +986,7 @@ export default function AdminPanel() {
                     </div>
                     <label>
                       Título da capa
-                      <input value={coverTitle} onChange={(e) => setCoverTitle(e.target.value)} maxLength={120} />
+                      <input value={coverTitle} onChange={(e) => setCoverTitle(e.target.value)} maxLength={88} />
                     </label>
                     <label>
                       Texto de apoio <span className="field-hint">(opcional)</span>
