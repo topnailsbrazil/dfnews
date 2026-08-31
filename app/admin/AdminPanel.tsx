@@ -159,7 +159,7 @@ export default function AdminPanel() {
         supabase
           .from("articles")
           .select(fields)
-          .eq("status", "published")
+          .or("status.eq.published,editorial_status.eq.publicada")
           .order("published_at", { ascending: false })
           .limit(60),
       ]);
@@ -716,7 +716,7 @@ export default function AdminPanel() {
                 aria-selected={view === key}
                 className={view === key ? "active" : ""}
                 key={key}
-                onClick={() => setView(key)}
+                onClick={() => { setView(key); if (key === "published") setDraft(null); }}
               >
                 {label}<span>{count}</span>
               </button>
@@ -1042,15 +1042,18 @@ export default function AdminPanel() {
                   : "As alterações são salvas automaticamente e a publicação exige confirmação."}
               </p>
               {view === "published" && (
-                <div className="published-gallery">
+                <div className="published-gallery published-feed-preview">
                   {publishedArticles.slice(0, 12).map((article) => (
                     <button type="button" key={article.id} onClick={() => select(article)}>
-                      {displayImage(article) ? (
-                        <img src={displayImage(article) || ""} alt="" />
-                      ) : (
-                        <span>DFJÁ</span>
-                      )}
-                      <strong>{article.title}</strong>
+                      <div className="published-feed-image">
+                        {displayImage(article) ? <img src={displayImage(article) || ""} alt="" /> : <span>DFJÁ</span>}
+                      </div>
+                      <div className="published-feed-copy">
+                        <small>Publicada · {formatDate(article.published_at || article.updated_at)}</small>
+                        <strong>{article.title}</strong>
+                        <p>{article.excerpt || "Matéria publicada no feed do DFJÁ."}</p>
+                        <em>Abrir matéria</em>
+                      </div>
                     </button>
                   ))}
                 </div>
