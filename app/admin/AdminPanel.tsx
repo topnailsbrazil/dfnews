@@ -380,12 +380,18 @@ export default function AdminPanel() {
     setSaving(true);
     setMessage("Gerando a capa editorial…");
     try {
+      const sourceResponse = await fetch(`/api/image-proxy?url=${encodeURIComponent(draft.image_url)}`);
+      if (!sourceResponse.ok) {
+        const sourceError = await sourceResponse.json().catch(() => ({}));
+        throw new Error(sourceError.error || "Não foi possível carregar a imagem da capa.");
+      }
+      const sourceBlob = await sourceResponse.blob();
+      const sourceUrl = URL.createObjectURL(sourceBlob);
       const image = new Image();
-      image.crossOrigin = "anonymous";
-      image.src = draft.image_url;
+      image.src = sourceUrl;
       await new Promise<void>((resolve, reject) => {
         image.onload = () => resolve();
-        image.onerror = () => reject(new Error("A imagem não permite edição no navegador."));
+        image.onerror = () => reject(new Error("Não foi possível decodificar a imagem."));
       });
       const canvas = document.createElement("canvas");
       canvas.width = 1200;
@@ -433,8 +439,9 @@ export default function AdminPanel() {
       const result = await fetch(`/api/articles/${draft.id}/image`, { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` }, body });
       const data = await result.json().catch(() => ({}));
       if (!result.ok || !data.url) throw new Error(data.error || "Falha ao salvar a capa.");
-      update("image_url", data.url);
+      setDraft((current) => current ? { ...current, image_url: data.url, wordpress_media_id: data.mediaId || current.wordpress_media_id } : current);
       setMessage("Capa criada e vinculada à matéria.");
+      URL.revokeObjectURL(sourceUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível criar a capa.");
     } finally {
