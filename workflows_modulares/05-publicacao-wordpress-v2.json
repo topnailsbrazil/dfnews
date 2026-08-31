@@ -28,7 +28,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const out=[]; for (const item of $input.all()) { const j=item.json||{}; if (!j.n8n_item_id && !j.article_id) continue; const status=String(j.status||j.editorial_status||'').toLowerCase(); const mapped=status==='publicada'?'publicada':status==='rascunho_wp'?'rascunho_wp':status==='erro_publicacao'?'erro_publicacao':'em_revisao_pwa'; out.push({json:{...j,id:j.n8n_item_id||j.id||'',status:mapped,link_wp:j.wordpress_url||j.wp_url||'',wp_post_id:j.wordpress_post_id||j.wp_post_id||'',wp_media_id:j.wordpress_media_id||j.wp_media_id||'',evento_ultimo:'retorno_pwa',agente_ultimo:'pwa',transicao_em:new Date().toISOString(),erro:j.last_error||j.erro||''}}); } return out;"
+        "jsCode": "const out=[]; for (const item of $input.all()) { const j=item.json||{}; const b=(j.body&&typeof j.body==='object')?j.body:{}; const x={...j,...b}; if (!x.n8n_item_id && !x.article_id && !x.id) continue; const now=new Date().toISOString(); const status=String(x.status||x.editorial_status||'').toLowerCase(); const mapped=status==='publicada'?'publicada':status==='rascunho_wp'?'rascunho_wp':status==='erro_publicacao'?'erro_publicacao':'em_revisao_pwa'; out.push({json:{...x,id:x.n8n_item_id||x.article_id||x.id,status:mapped,decisao:x.decisao||'aprovar',decisao_em:x.decisao_em||x.transicao_em||now,processado_ia_em:x.processado_ia_em||x.ai_processed_at||(mapped==='rascunho_wp'?now:''),pwa_article_id:x.pwa_article_id||x.article_id||'',pwa_status:x.pwa_status||mapped,wp_post_id:x.wordpress_post_id||x.wp_post_id||'',wp_url:x.wordpress_url||x.wp_url||'',wp_media_id:x.wordpress_media_id||x.wp_media_id||'',erro:x.last_error||x.erro||x.error||'',evento_ultimo:'retorno_pwa',agente_ultimo:'pwa',atualizado_em:now,execution_id:$execution.id}}); } return out;"
       }
     },
     {
@@ -59,10 +59,10 @@
           "columns": {
             "mappingMode": "autoMapInputData",
             "value": {
-              "approval_token": "={{ $('Pega Mais Antiga Pendente — Notícias').first().json.approval_token }}",
+              "approval_token": "={{ $json.approval_token || '' }}",
               "status": "rascunho_wp",
-              "id": "={{ $('Pega Mais Antiga Pendente — Notícias').first().json.id || '' }}",
-              "story_id": "={{ $json.id || $('Pega Mais Antiga Pendente — Notícias').first().json.story_id || '' }}",
+              "id": "={{ $json.id || '' }}",
+              "story_id": "={{ $json.story_id || $json.id || '' }}",
               "data_publicacao": "={{ new Date().toISOString() }}",
               "erro": "",
               "evento_ultimo": "rascunho_wordpress",

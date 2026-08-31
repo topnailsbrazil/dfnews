@@ -102,7 +102,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-      "jsonBody": "={{ JSON.stringify({ decisao: 'aprovar', n8n_item_id: $json.id || $json.story_id, approval_token: $json.approval_token || '', title: $json.titulo || $json.title, content: $json.conteudo || $json.content, excerpt: $json.resumo || $json.excerpt, image_url: $json.imagem_url || $json.image_url, image_credit: $json.image_credit || \"\", source_name: $json.fonte || $json.source_name, source_url: $json.link_original || $json.link || $json.source_url, author: $json.author || \"Redação\", tags: Array.isArray($json.tags) ? $json.tags : [], categoria: $json.categoria || $json.category || \"Brasil\" }) }}",
+      "jsonBody": "={{ JSON.stringify({ decisao: $json.decisao || 'aprovar', decisao_em: $json.decisao_em || new Date().toISOString(), processado_ia_em: $json.processado_ia_em || new Date().toISOString(), n8n_item_id: $json.id || $json.story_id, approval_token: $json.approval_token || '', title: $json.titulo || $json.title, content: $json.conteudo || $json.content, excerpt: $json.resumo || $json.excerpt, image_url: $json.imagem_url || $json.image_url, image_credit: $json.image_credit || \"\", source_name: $json.fonte || $json.source_name, source_url: $json.link_original || $json.link || $json.source_url, author: $json.author || \"Redação\", tags: Array.isArray($json.tags) ? $json.tags : [], categoria: $json.categoria || $json.category || \"Brasil\" }) }}",
         "options": {
           "timeout": 30000
         }
