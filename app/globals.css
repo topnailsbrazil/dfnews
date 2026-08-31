@@ -1026,16 +1026,17 @@ button {
 .cover-editor-heading span { color: #82909c; font-size: 11px; }
 .cover-preview {
   align-items: flex-end;
+  aspect-ratio: 4 / 5;
   background-color: #173047;
   background-position: center;
   background-size: cover;
   border-radius: 10px;
   display: flex;
-  min-height: 190px;
   overflow: hidden;
   padding: 16px;
   position: relative;
 }
+.cover-preview-logo { border-radius: 5px; color: #fff; font-size: 16px; font-weight: 800; left: 16px; padding: 8px 12px; position: absolute; top: 16px; z-index: 1; }
 .cover-preview-top { align-items: flex-start; }
 .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.08), rgba(3,8,16,.95)); inset: 0; position: absolute; }
 .cover-preview-top .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.95), rgba(3,8,16,.08)); }

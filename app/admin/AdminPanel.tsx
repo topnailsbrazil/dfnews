@@ -909,6 +909,7 @@ export default function AdminPanel() {
                       style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
                     >
                       <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
+                      {coverLogoText.trim() && <span className="cover-preview-logo" style={{ background: coverAccent }}>{coverLogoText.trim().slice(0, 18)}</span>}
                       <div className="cover-preview-copy">
                         <strong>{coverTitle || draft.title || "Título da matéria"}</strong>
                         {coverSubtitle && <span>{coverSubtitle}</span>}
