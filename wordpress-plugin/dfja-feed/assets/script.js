@@ -8,7 +8,7 @@
   const modalContent = document.getElementById('dfja-modal-content');
   if (!feed || !modal || !modalContent) return;
 
-  const state = { page: 1, loading: false, exhausted: false, category: 0, pointer: null, moved: false, suppressClick: false };
+  const state = { page: 1, loading: false, exhausted: false, category: 0, pointer: null, moved: false, suppressClick: false, requestId: 0 };
   const loadedPostIds = new Set();
   const trackedViewIds = new Set();
   const demo = [
@@ -237,11 +237,13 @@
 
   async function loadNextPage() {
     if (state.loading || state.exhausted) return; state.loading = true;
-    let url = `${config.apiUrl}?_embed&per_page=${Number(config.postsPerPage) || 5}&page=${state.page}`; if (state.category) url += `&categories=${state.category}`;
+    const requestId = state.requestId;
+    let url = `${config.apiUrl}?_embed&orderby=date&order=desc&per_page=${Number(config.postsPerPage) || 5}&page=${state.page}&dfja_refresh=${Date.now()}`; if (state.category) url += `&categories=${state.category}`;
     try {
-      const response = await fetch(url, { headers: { 'X-WP-Nonce': config.nonce } });
+      const response = await fetch(url, { cache: 'no-store', headers: { 'X-WP-Nonce': config.nonce, 'Cache-Control': 'no-cache' } });
       if (!response.ok) throw new Error('feed-end');
       const posts = await response.json();
+      if (requestId !== state.requestId) return;
       const activeName = document.querySelector('.dfja-category.is-active')?.textContent?.trim() || 'DF';
       const matchingDemo = demo.filter((item) => !state.category || item[0] === activeName);
       const fallback = state.page <= 6 ? (matchingDemo.length ? matchingDemo : demo).map(postFromDemo) : [];
@@ -273,7 +275,8 @@
     } finally { state.loading = false; }
   }
   function resetFeed(category) {
-    state.page = 1; state.category = category; state.exhausted = false;
+    state.requestId += 1;
+    state.page = 1; state.category = category; state.exhausted = false; state.loading = false;
     loadedPostIds.clear();
     feed.querySelectorAll('.post-slide').forEach((card) => card.remove());
     feed.scrollTop = 0;
@@ -306,6 +309,6 @@
   const directPost = new URLSearchParams(location.search).get('post');
   loadNextPage();
   if (directPost && !String(directPost).startsWith('demo-')) {
-    fetch(`${config.apiUrl}/${encodeURIComponent(directPost)}?_embed`, { headers: { 'X-WP-Nonce': config.nonce } }).then((response) => response.ok ? response.json() : null).then((post) => { if (post) openReader(post, true); }).catch(() => {});
+    fetch(`${config.apiUrl}/${encodeURIComponent(directPost)}?_embed&dfja_refresh=${Date.now()}`, { cache: 'no-store', headers: { 'X-WP-Nonce': config.nonce, 'Cache-Control': 'no-cache' } }).then((response) => response.ok ? response.json() : null).then((post) => { if (post) openReader(post, true); }).catch(() => {});
   }
 })();
