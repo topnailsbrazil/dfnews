@@ -112,9 +112,10 @@ export async function POST(
         { status: 409 },
       );
   }
+  const currentCoverMediaId = Number(currentArticle.cover_media_id || 0);
   const hasNewCover = Boolean(
-    currentArticle.cover_media_id &&
-    Number(currentArticle.cover_media_id) !== Number(article.wordpress_media_id || 0),
+    (currentCoverMediaId && currentCoverMediaId !== Number(article.wordpress_media_id || 0)) ||
+    (currentArticle.cover_image_url && currentArticle.cover_image_url !== article.cover_image_url),
   );
   if (article.wordpress_post_id && article.editorial_status === "publicada" && !hasNewCover)
     return NextResponse.json({
@@ -133,7 +134,9 @@ export async function POST(
     );
 
   const auth = `Basic ${Buffer.from(`${wpUser}:${wpPassword}`).toString("base64")}`;
-  let mediaId = currentArticle.cover_media_id || currentArticle.wordpress_media_id || 0;
+  const hasCover = Boolean(currentArticle.cover_image_url || currentCoverMediaId);
+  let coverMediaId = currentCoverMediaId;
+  let mediaId = currentCoverMediaId || currentArticle.wordpress_media_id || 0;
   try {
     if (!mediaId && (currentArticle.cover_image_url || currentArticle.image_url)) {
       const imageResponse = await fetch(String(currentArticle.cover_image_url || currentArticle.image_url));
@@ -159,6 +162,7 @@ export async function POST(
           ),
         );
       mediaId = Number((await mediaResponse.json()).id);
+      if (hasCover && !coverMediaId) coverMediaId = mediaId;
     }
     let categoryIds: number[] | undefined;
     const requestedCategoryIds = Array.isArray(requestBody.category_ids)
@@ -211,7 +215,7 @@ export async function POST(
         dfja_source_name: currentArticle.source_name || "",
         dfja_source_url: currentArticle.source_url || "",
         dfja_image_url: currentArticle.image_url || "",
-        dfja_cover_image_url: currentArticle.cover_image_url || currentArticle.image_url || "",
+        dfja_cover_image_url: currentArticle.cover_image_url || "",
         dfja_image_credit: currentArticle.image_credit || "",
         dfja_n8n_item_id: article.n8n_item_id || "",
       },
@@ -238,6 +242,10 @@ export async function POST(
         await describeWordPressError("publicação WordPress falhou", response),
       );
     const post = await response.json();
+    if (mediaId && Number(post.featured_media || 0) !== mediaId)
+      throw new Error(
+        `WordPress confirmou a publicação, mas não confirmou a imagem destacada (esperada ${mediaId}, recebida ${Number(post.featured_media || 0)}).`,
+      );
     const now = new Date().toISOString();
     const editorialStatus =
       wpStatus === "draft" ? "pronta_para_publicacao" : "publicada";
@@ -246,7 +254,7 @@ export async function POST(
       .update({
         wordpress_post_id: post.id,
         wordpress_media_id: mediaId || null,
-        cover_media_id: mediaId || null,
+        cover_media_id: coverMediaId || null,
         wordpress_url: post.link,
         editorial_status: editorialStatus,
         status: wpStatus === "draft" ? "draft" : "published",
@@ -275,6 +283,7 @@ export async function POST(
           n8n_item_id: article.n8n_item_id,
           wordpress_post_id: post.id,
           wordpress_media_id: mediaId || null,
+          cover_media_id: coverMediaId || null,
           wordpress_url: post.link,
           status: wpStatus === "draft" ? "rascunho_wp" : "publicada",
           published_at: wpStatus === "draft" ? null : now,
@@ -295,6 +304,7 @@ export async function POST(
       ok: true,
       id: post.id,
       mediaId,
+      coverMediaId: coverMediaId || null,
       url: post.link,
       status: wpStatus,
     });

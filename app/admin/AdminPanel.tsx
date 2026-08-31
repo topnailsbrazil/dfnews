@@ -586,7 +586,7 @@ export default function AdminPanel() {
         wordpress_post_id: data.id || draft.wordpress_post_id,
         wordpress_media_id: data.mediaId || draft.wordpress_media_id,
         cover_image_url: draft.cover_image_url,
-        cover_media_id: data.mediaId || draft.cover_media_id,
+        cover_media_id: data.coverMediaId || draft.cover_media_id,
       });
     }
     setPublishing(false);
