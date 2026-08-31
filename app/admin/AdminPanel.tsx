@@ -118,7 +118,7 @@ export default function AdminPanel() {
   const [coverSubtitle, setCoverSubtitle] = useState("");
   const [coverGradient, setCoverGradient] = useState(62);
   const [coverPosition, setCoverPosition] = useState("bottom");
-  const [coverTemplate, setCoverTemplate] = useState("jornal");
+  const [coverTemplate, setCoverTemplate] = useState("dfja");
   const [coverAccent, setCoverAccent] = useState("#147d6e");
   const [coverLogoText, setCoverLogoText] = useState("DFJÁ");
   const [coverSecondImageUrl, setCoverSecondImageUrl] = useState("");
@@ -424,42 +424,30 @@ export default function AdminPanel() {
         const drawnHeight = image.height * scale;
         context.drawImage(image, x + (width - drawnWidth) / 2, y + (height - drawnHeight) / 2, drawnWidth, drawnHeight);
       };
-      context.fillStyle = coverTemplate === "faixa" ? "#050505" : coverAccent;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      if (coverTemplate === "dividida" && secondary) {
-        drawCoverImage(primary.image, 0, 0, canvas.width / 2, canvas.height * 0.62);
-        drawCoverImage(secondary.image, canvas.width / 2, 0, canvas.width / 2, canvas.height * 0.62);
-        context.fillStyle = "#050505";
-        context.fillRect(0, canvas.height * 0.62, canvas.width, canvas.height * 0.38);
-      } else if (coverTemplate === "faixa") {
-        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height * 0.64);
-        context.fillStyle = "#050505";
-        context.fillRect(0, canvas.height * 0.58, canvas.width, canvas.height * 0.42);
-      } else {
-        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
-      }
+      const dark = "#050505";
       const opacity = Math.max(0, Math.min(100, coverGradient)) / 100;
-      const gradient = context.createLinearGradient(0, coverPosition === "top" ? 0 : canvas.height, 0, coverPosition === "top" ? canvas.height : 0);
-      gradient.addColorStop(0, `rgba(3, 8, 16, ${opacity})`);
-      gradient.addColorStop(0.62, `rgba(3, 8, 16, ${opacity * 0.42})`);
-      gradient.addColorStop(1, "rgba(3, 8, 16, 0.04)");
-      if (coverTemplate !== "faixa") { context.fillStyle = gradient; context.fillRect(0, 0, canvas.width, canvas.height); }
-      if (logo) {
-        const logoHeight = 70;
-        const logoWidth = Math.min(300, logo.width * logoHeight / logo.height);
-        context.drawImage(logo, 54, 48, logoWidth, logoHeight);
-      } else if (coverLogoText.trim()) {
-        context.fillStyle = coverAccent;
-        context.fillRect(48, 44, 190, 70);
-        context.fillStyle = "#fff";
-        context.font = "800 38px Arial, sans-serif";
+      const drawGradient = (top: boolean, color = "3, 8, 16") => {
+        const gradient = context.createLinearGradient(0, top ? 0 : canvas.height, 0, top ? canvas.height : 0);
+        gradient.addColorStop(0, `rgba(${color}, ${opacity})`);
+        gradient.addColorStop(0.62, `rgba(${color}, ${opacity * 0.42})`);
+        gradient.addColorStop(1, `rgba(${color}, 0.04)`);
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      };
+      const drawLogo = (x: number, y: number, fill = coverAccent, white = true) => {
+        if (logo) {
+          const logoHeight = 72;
+          const logoWidth = Math.min(300, logo.width * logoHeight / logo.height);
+          context.drawImage(logo, x, y, logoWidth, logoHeight);
+          return;
+        }
+        context.fillStyle = fill;
+        context.fillRect(x, y, 215, 76);
+        context.fillStyle = white ? "#fff" : "#111";
+        context.font = "800 40px Arial, sans-serif";
         context.textBaseline = "middle";
-        context.fillText(coverLogoText.trim().slice(0, 18), 66, 80);
-      }
-      const bottom = coverPosition === "top" ? 160 : canvas.height - (coverTemplate === "dividida" || coverTemplate === "faixa" ? 90 : 110);
-      context.fillStyle = "#ffffff";
-      context.font = coverTemplate === "dividida" ? "800 48px Georgia, serif" : "800 54px Arial, sans-serif";
-      context.textBaseline = coverPosition === "top" ? "top" : "bottom";
+        context.fillText(coverLogoText.trim().slice(0, 18) || "DFJÁ", x + 18, y + 39);
+      };
       const wrap = (text: string, maxWidth: number) => {
         const words = text.trim().split(/\s+/).filter(Boolean);
         const lines: string[] = [];
@@ -471,13 +459,43 @@ export default function AdminPanel() {
         if (line) lines.push(line);
         return lines.slice(0, 4);
       };
-      const titleLines = wrap(coverTitle || draft.title || "DFJÁ", canvas.width - 120);
-      titleLines.forEach((line, index) => context.fillText(line, 60, coverPosition === "top" ? bottom + index * 56 : bottom - (titleLines.length - 1 - index) * 56));
-      if (coverSubtitle.trim()) {
-        context.font = "500 25px Arial, sans-serif";
-        context.fillStyle = "rgba(255,255,255,.88)";
-        const subtitleY = coverPosition === "top" ? bottom + titleLines.length * 56 + 28 : bottom + 30;
-        context.fillText(coverSubtitle.trim().slice(0, 110), 60, subtitleY);
+      const title = coverTitle || draft.title || "DFJÁ";
+      const titleLines = wrap(title, canvas.width - 120);
+      const drawTitle = (x: number, y: number, maxWidth: number, font: string, color = "#fff", align: CanvasTextAlign = "left") => {
+        context.fillStyle = color;
+        context.font = font;
+        context.textBaseline = "top";
+        context.textAlign = align;
+        const lines = wrap(title, maxWidth);
+        lines.forEach((line, index) => context.fillText(line, x, y + index * 62));
+        context.textAlign = "left";
+        return lines.length;
+      };
+      if (coverTemplate === "uol" || coverTemplate === "dividida") {
+        drawCoverImage(primary.image, 0, 0, canvas.width / 2, canvas.height);
+        drawCoverImage((secondary || primary).image, canvas.width / 2, 0, canvas.width / 2, canvas.height);
+        drawGradient(false);
+        drawTitle(58, canvas.height - 430, canvas.width - 116, "500 50px Arial, sans-serif");
+        context.font = "800 56px Arial, sans-serif"; context.fillStyle = "#fff"; context.fillText("DESTAQUE:", 58, canvas.height - 510);
+        drawLogo(canvas.width - 275, canvas.height - 150, "#e3262e");
+      } else if (coverTemplate === "cbn") {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
+        drawGradient(false);
+        drawLogo(48, 48, "#e3262e");
+        drawTitle(60, canvas.height - 390, canvas.width - 120, "800 48px Georgia, serif");
+      } else if (coverTemplate === "metropoles" || coverTemplate === "faixa") {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height * 0.60);
+        context.fillStyle = dark; context.fillRect(0, canvas.height * 0.57, canvas.width, canvas.height * 0.43);
+        drawLogo(60, canvas.height * 0.64, "#e3262e");
+        drawTitle(canvas.width / 2, canvas.height * 0.73, canvas.width - 120, "800 47px Georgia, serif", "#fff", "center");
+        context.font = "500 25px Arial, sans-serif"; context.textAlign = "center"; context.fillStyle = "#fff"; context.fillText(coverSubtitle.trim().slice(0, 80) || "@DFJA", canvas.width / 2, canvas.height - 80); context.textAlign = "left";
+      } else {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
+        drawGradient(coverPosition === "top");
+        drawLogo(48, 44);
+        const bottom = coverPosition === "top" ? 160 : canvas.height - 130;
+        drawTitle(60, coverPosition === "top" ? bottom : bottom - titleLines.length * 62, canvas.width - 120, "800 54px Arial, sans-serif");
+        if (coverSubtitle.trim()) { context.font = "500 25px Arial, sans-serif"; context.fillStyle = "rgba(255,255,255,.88)"; context.fillText(coverSubtitle.trim().slice(0, 110), 60, canvas.height - 62); }
       }
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
       if (!blob) throw new Error("Não foi possível exportar a capa.");
@@ -937,9 +955,11 @@ export default function AdminPanel() {
                       <label>
                         Modelo
                         <select value={coverTemplate} onChange={(e) => setCoverTemplate(e.target.value)}>
-                          <option value="jornal">Jornal</option>
-                          <option value="dividida">Dividida (duas imagens)</option>
-                          <option value="faixa">Faixa preta</option>
+                          <option value="dfja">DFJÁ — destaque</option>
+                          <option value="uol">Dividida — pesquisa</option>
+                          <option value="cbn">Selo vermelho — manchete</option>
+                          <option value="metropoles">Bloco preto — editorial</option>
+                          <option value="urgente">Urgente</option>
                           <option value="limpa">Limpa</option>
                         </select>
                       </label>
@@ -979,7 +999,7 @@ export default function AdminPanel() {
                         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setCoverLogoFile(e.target.files?.[0] || null)} />
                       </label>
                     </div>
-                    {coverTemplate === "dividida" && (
+                    {(coverTemplate === "uol" || coverTemplate === "dividida") && (
                       <label>
                         URL da segunda imagem
                         <input type="url" value={coverSecondImageUrl} onChange={(e) => setCoverSecondImageUrl(e.target.value)} placeholder="https://..." />

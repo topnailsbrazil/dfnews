@@ -1051,6 +1051,14 @@ button {
 .cover-preview-faixa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.05), rgba(3,8,16,.15)); height: 58%; }
 .cover-preview-faixa .cover-preview-copy { bottom: 30%; max-width: 92%; }
 .cover-preview-limpa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.02), rgba(3,8,16,.72)); }
+.cover-preview-uol .cover-preview-half { height: 64%; inset: 0 auto auto; background-size: cover; }
+.cover-preview-uol .cover-preview-half + .cover-preview-half { left: 50%; }
+.cover-preview-cbn .cover-preview-logo { background: #e3262e !important; border-radius: 0 0 12px 0; font-style: italic; font-size: 18px; }
+.cover-preview-metropoles { background: #050505; }
+.cover-preview-metropoles .cover-preview-image { height: 60%; inset: 0 0 auto; background-size: cover; }
+.cover-preview-metropoles .cover-preview-copy { background: #050505; bottom: 8%; left: 0; max-width: none; padding: 14px 16px; right: 0; text-align: center; }
+.cover-preview-metropoles .cover-preview-copy strong { font-family: Georgia, serif; }
+.cover-preview-urgente .cover-preview-logo { background: #e3262e !important; }
 .cover-preview-feed-copy { align-self: flex-end; color: #d9e1ea; display: grid; gap: 4px; left: 16px; max-width: calc(100% - 32px); position: absolute; right: 16px; top: 72%; z-index: 2; }
 .cover-preview-feed-copy span { color: #55d6be; font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .cover-preview-feed-copy strong { color: #fff; font-size: 13px; line-height: 1.1; }
