@@ -108,6 +108,7 @@ export default function AdminPanel() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [runningFlow, setRunningFlow] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
@@ -127,26 +128,38 @@ export default function AdminPanel() {
     );
     return () => listener.data.subscription.unsubscribe();
   }, []);
-  async function load() {
-    const [a, c, p] = await Promise.all([
-      supabase
-        .from("articles")
-        .select(fields)
-        .not("editorial_status", "eq", "rejeitada")
-        .order("updated_at", { ascending: false })
-        .limit(200),
-      fetch("/api/categories").then((r) => (r.ok ? r.json() : [])),
-      supabase
-        .from("articles")
-        .select(fields)
-        .eq("status", "published")
-        .order("published_at", { ascending: false })
-        .limit(60),
-    ]);
-    if (a.error) setMessage(a.error.message);
-    else setArticles((a.data || []) as Article[]);
-    if (!p.error) setPublishedArticles((p.data || []) as Article[]);
-    setCategories(Array.isArray(c) ? c : []);
+  async function load(showFeedback = false) {
+    if (showFeedback) {
+      setRefreshing(true);
+      setMessage("Atualizando a fila…");
+    }
+    try {
+      const [a, c, p] = await Promise.all([
+        supabase
+          .from("articles")
+          .select(fields)
+          .not("editorial_status", "eq", "rejeitada")
+          .order("updated_at", { ascending: false })
+          .limit(200),
+        fetch("/api/categories").then(async (r) => (r.ok ? r.json() : [])),
+        supabase
+          .from("articles")
+          .select(fields)
+          .eq("status", "published")
+          .order("published_at", { ascending: false })
+          .limit(60),
+      ]);
+      if (a.error) throw new Error(a.error.message);
+      setArticles((a.data || []) as Article[]);
+      if (p.error) throw new Error(p.error.message);
+      setPublishedArticles((p.data || []) as Article[]);
+      setCategories(Array.isArray(c) ? c : []);
+      if (showFeedback) setMessage("Fila atualizada.");
+    } catch (error) {
+      setMessage(`Não foi possível atualizar a fila: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+    } finally {
+      if (showFeedback) setRefreshing(false);
+    }
   }
   async function runFlow() {
     if (runningFlow) return;
@@ -536,8 +549,8 @@ export default function AdminPanel() {
               <button type="button" onClick={newArticle}>
                 Nova matéria
               </button>
-              <button type="button" onClick={load}>
-                Atualizar
+              <button type="button" onClick={() => load(true)} disabled={refreshing}>
+                {refreshing ? "Atualizando…" : "Atualizar"}
               </button>
               <button
                 type="button"
