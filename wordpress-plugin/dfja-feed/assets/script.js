@@ -238,7 +238,11 @@
   async function loadNextPage() {
     if (state.loading || state.exhausted) return; state.loading = true;
     const requestId = state.requestId;
-    let url = `${config.apiUrl}?_embed&orderby=date&order=desc&per_page=${Number(config.postsPerPage) || 5}&page=${state.page}&dfja_refresh=${Date.now()}`; if (state.category) url += `&categories=${state.category}`;
+    // O feed deve abrir com todas as publicações recentes visíveis. Mantemos
+    // paginação para listas maiores, mas nunca limitamos a primeira carga a
+    // cinco cards, que fazia o Para você parecer incompleto.
+    const pageSize = Math.min(100, Math.max(20, Number(config.postsPerPage) || 20));
+    let url = `${config.apiUrl}?_embed&orderby=date&order=desc&per_page=${pageSize}&page=${state.page}&dfja_refresh=${Date.now()}`; if (state.category) url += `&categories=${state.category}`;
     try {
       const response = await fetch(url, { cache: 'no-store', headers: { 'X-WP-Nonce': config.nonce, 'Cache-Control': 'no-cache' } });
       if (!response.ok) throw new Error('feed-end');
