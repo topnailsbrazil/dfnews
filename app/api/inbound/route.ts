@@ -85,13 +85,14 @@ export async function POST(request: NextRequest) {
     .from("articles")
     .select("id")
     .eq("n8n_item_id", row.n8n_item_id)
-    .limit(1)
-    .maybeSingle();
+    .order("updated_at", { ascending: false })
+    .limit(1);
   if (existing.error)
     return NextResponse.json(
       { error: existing.error.message },
       { status: 502 },
     );
+  const existingArticle = existing.data?.[0] || null;
 
   let data: {
     id: string;
@@ -100,11 +101,11 @@ export async function POST(request: NextRequest) {
     wordpress_post_id?: number | null;
   } | null = null;
   let error: { message: string } | null = null;
-  if (existing.data?.id) {
+  if (existingArticle?.id) {
     const result = await supabase
       .from("articles")
       .update(row)
-      .eq("id", existing.data.id)
+      .eq("id", existingArticle.id)
       .select("id,n8n_item_id,editorial_status")
       .single();
     data = result.data;
@@ -129,12 +130,12 @@ export async function POST(request: NextRequest) {
   let wordpressError = "";
   if (wpUser && wpPassword) {
     const auth = `Basic ${Buffer.from(`${wpUser}:${wpPassword}`).toString("base64")}`;
-    const postId = existing.data?.id
+    const postId = existingArticle?.id
       ? (
           await supabase
             .from("articles")
             .select("wordpress_post_id")
-            .eq("id", existing.data.id)
+            .eq("id", existingArticle.id)
             .maybeSingle()
         ).data?.wordpress_post_id
       : null;
