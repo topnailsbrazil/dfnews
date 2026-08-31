@@ -13,10 +13,10 @@ export async function POST(request: NextRequest) {
       { status: 503 },
     );
   const body = await request.json();
-  const decision = String(body.decisao || body.decision || "")
+  const decision = String(body.decisao || body.decision || body.action || "")
     .trim()
     .toLowerCase();
-  if (decision !== "aprovar")
+  if (!["aprovar", "processar", "aprovado", "approved"].includes(decision))
     return NextResponse.json(
       { error: "Matéria bloqueada: somente itens aprovados no Telegram podem entrar no PWA." },
       { status: 403 },
