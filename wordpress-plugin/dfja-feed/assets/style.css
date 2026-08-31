@@ -25,6 +25,7 @@
 .dfja-modal-close { background: transparent; border: 0; font-size: 36px; position: absolute; right: 18px; top: 12px; }
 .dfja-modal-body { line-height: 1.7; max-width: 760px; }
 .dfja-loader { padding: 50px; text-align: center; }
+.dfja-feed-empty { color: #b9c4d3; margin: auto; max-width: 260px; padding: 32px 24px; text-align: center; }
 .dfja-refresh-indicator { color: #b9c4d3; font-size: 11px; height: 0; left: 0; opacity: 0; overflow: hidden; pointer-events: none; position: absolute; right: 0; text-align: center; top: 0; transition: height .15s ease, opacity .15s ease; z-index: 7; }
 .dfja-refresh-indicator.is-visible { height: 30px; opacity: 1; padding-top: 10px; }
 .dfja-refresh-indicator.is-refreshing { color: #55d6be; }

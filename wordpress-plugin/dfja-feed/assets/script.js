@@ -250,7 +250,7 @@
       if (requestId !== state.requestId) return;
       const activeName = document.querySelector('.dfja-category.is-active')?.textContent?.trim() || 'DF';
       const matchingDemo = demo.filter((item) => !state.category || item[0] === activeName);
-      const fallback = state.page <= 6 ? (matchingDemo.length ? matchingDemo : demo).map(postFromDemo) : [];
+      const fallback = config.demoMode && state.page <= 6 ? (matchingDemo.length ? matchingDemo : demo).map(postFromDemo) : [];
       let items = personalize(posts.length ? posts : fallback);
       if (config.demoMode && state.page === 1) {
         const demoSource = fallback.length ? fallback : demo.map(postFromDemo);
@@ -269,11 +269,17 @@
     } catch (error) {
       if (state.page === 1) {
         const activeName = document.querySelector('.dfja-category.is-active')?.textContent?.trim() || 'DF';
-        const matchingDemo = demo.filter((item) => !state.category || item[0] === activeName);
-        const fallback = matchingDemo.length ? matchingDemo : demo;
-        const safeFallback = fallback.length ? fallback : [[activeName, `Notícias de ${activeName}`, `Acompanhe as principais informações de ${activeName} no DFJÁ.`, demo[0][3]]];
         feed.querySelector('.dfja-loader')?.remove();
-        safeFallback.map(postFromDemo).forEach((post) => feed.insertBefore(createSlide(post), sentinel || null));
+        if (config.demoMode) {
+          const matchingDemo = demo.filter((item) => !state.category || item[0] === activeName);
+          const fallback = matchingDemo.length ? matchingDemo : demo;
+          fallback.map(postFromDemo).forEach((post) => feed.insertBefore(createSlide(post), sentinel || null));
+        } else {
+          const empty = document.createElement('p');
+          empty.className = 'dfja-feed-empty';
+          empty.textContent = state.category ? `Nenhuma matéria publicada em ${activeName}.` : 'Não foi possível carregar as matérias agora.';
+          feed.insertBefore(empty, sentinel || null);
+        }
         state.page += 1;
       } else state.exhausted = true;
     } finally { state.loading = false; }
