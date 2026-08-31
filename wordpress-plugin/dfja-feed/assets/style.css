@@ -134,8 +134,8 @@
 @media (min-width: 1200px) {
   .dfja-phone { width: min(680px, calc(100% - 48px), calc((100svh - 48px) * 4 / 5)); }
   .dfja-card { padding: 126px 88px 30px 30px; }
-  .slide-img-container { bottom: 41%; height: 47%; inset-inline: 0; padding-bottom: 0; top: auto; }
-  .slide-img-center { max-height: 100%; max-width: 100%; width: 100%; }
+  .slide-img-container { aspect-ratio: 4 / 5; bottom: auto; height: auto; inset-inline: 0; padding-bottom: 0; top: 0; }
+  .slide-img-center { height: auto; max-height: none; max-width: 100%; width: 100%; }
   .dfja-card-content { max-width: 100%; }
   .dfja-card h2 { font-size: clamp(24px, 1.7vw, 30px); line-height: 1.08; margin: 8px 0 10px; }
   .dfja-card p { font-size: clamp(15px, 1.05vw, 17px); line-height: 1.4; }
