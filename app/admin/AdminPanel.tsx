@@ -425,12 +425,12 @@ export default function AdminPanel() {
         });
       }
       // O Feed83 exibe a imagem em uma faixa de largura total com proporção
-      // aproximada de 2:1. A arte é montada no canvas editorial e exportada
-      // nessa proporção para que o plugin não precise cortar nem redimensionar
-      // a capa depois do upload.
+      // aproximada de 2:1. A arte é montada diretamente nessa proporção;
+      // nunca comprimimos uma composição vertical pronta, pois isso deforma
+      // rostos, logos e tipografia.
       const canvas = document.createElement("canvas");
       canvas.width = 1200;
-      canvas.height = 1500;
+      canvas.height = 600;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Editor de capa indisponível.");
       const drawCoverImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
@@ -496,42 +496,36 @@ export default function AdminPanel() {
         drawCoverImage(primary.image, 0, 0, canvas.width / 2, canvas.height);
         drawCoverImage((secondary || primary).image, canvas.width / 2, 0, canvas.width / 2, canvas.height);
         drawGradient(false);
-        drawTitle(58, canvas.height - 430, canvas.width - 116, "500 50px Arial, sans-serif");
-        context.font = "800 56px Arial, sans-serif"; context.fillStyle = "#fff"; context.fillText("DESTAQUE:", 58, canvas.height - 510);
-        drawLogo(canvas.width - 275, canvas.height - 150, "#e3262e");
+        drawTitle(58, canvas.height - 190, canvas.width - 116, "500 34px Arial, sans-serif");
+        context.font = "800 38px Arial, sans-serif"; context.fillStyle = "#fff"; context.fillText("DESTAQUE:", 58, canvas.height - 235);
+        drawLogo(canvas.width - 215, canvas.height - 92, "#e3262e");
       } else if (coverTemplate === "cbn") {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
         drawGradient(false);
         drawLogo(48, 48, "#e3262e");
-        drawTitle(60, canvas.height - 390, canvas.width - 120, "800 48px Georgia, serif");
+        drawTitle(60, canvas.height - 150, canvas.width - 120, "800 34px Georgia, serif");
       } else if (coverTemplate === "metropoles" || coverTemplate === "faixa" || coverTemplate === "noticia") {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height * 0.60);
         context.fillStyle = dark; context.fillRect(0, canvas.height * 0.57, canvas.width, canvas.height * 0.43);
         drawLogo(60, canvas.height * 0.64, "#e3262e");
-        drawTitle(coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height * 0.73, canvas.width - 120, "800 47px Georgia, serif", "#fff", coverTemplate === "noticia" ? "left" : "center");
-        context.font = "500 25px Arial, sans-serif"; context.textAlign = coverTemplate === "noticia" ? "left" : "center"; context.fillStyle = "#fff"; context.fillText(coverSubtitle.trim().slice(0, 80) || "@DFJA", coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height - 80); context.textAlign = "left";
+        drawTitle(coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height * 0.73, canvas.width - 120, "800 31px Georgia, serif", "#fff", coverTemplate === "noticia" ? "left" : "center");
+        context.font = "500 18px Arial, sans-serif"; context.textAlign = coverTemplate === "noticia" ? "left" : "center"; context.fillStyle = "#fff"; context.fillText(coverSubtitle.trim().slice(0, 80) || "@DFJA", coverTemplate === "noticia" ? 60 : canvas.width / 2, canvas.height - 30); context.textAlign = "left";
       } else if (coverTemplate === "g1") {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
         drawGradient(false, "0, 0, 0");
         drawLogo(48, 48, "#147d6e");
-        drawTitle(60, canvas.height - 390, canvas.width - 120, "800 50px Arial, sans-serif");
+        drawTitle(60, canvas.height - 150, canvas.width - 120, "800 36px Arial, sans-serif");
       } else {
         drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
         drawGradient(coverPosition === "top");
         drawLogo(48, 44);
-        const bottom = coverPosition === "top" ? 160 : canvas.height - 130;
-        context.font = "800 54px Arial, sans-serif";
+        const bottom = coverPosition === "top" ? 120 : canvas.height - 100;
+        context.font = "800 38px Arial, sans-serif";
         const lineCount = wrap(title, canvas.width - 120).length;
-        drawTitle(60, coverPosition === "top" ? bottom : bottom - lineCount * 62, canvas.width - 120, "800 54px Arial, sans-serif");
-        if (coverSubtitle.trim()) { context.font = "500 25px Arial, sans-serif"; context.fillStyle = "rgba(255,255,255,.88)"; context.fillText(coverSubtitle.trim().slice(0, 110), 60, canvas.height - 62); }
+        drawTitle(60, coverPosition === "top" ? bottom : bottom - lineCount * 44, canvas.width - 120, "800 38px Arial, sans-serif");
+        if (coverSubtitle.trim()) { context.font = "500 18px Arial, sans-serif"; context.fillStyle = "rgba(255,255,255,.88)"; context.fillText(coverSubtitle.trim().slice(0, 110), 60, canvas.height - 28); }
       }
-      const feedCanvas = document.createElement("canvas");
-      feedCanvas.width = 1200;
-      feedCanvas.height = 600;
-      const feedContext = feedCanvas.getContext("2d");
-      if (!feedContext) throw new Error("Editor de capa indisponível.");
-      feedContext.drawImage(canvas, 0, 0, feedCanvas.width, feedCanvas.height);
-      const blob = await new Promise<Blob | null>((resolve) => feedCanvas.toBlob(resolve, "image/jpeg", 0.9));
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
       if (!blob) throw new Error("Não foi possível exportar a capa.");
       const body = new FormData();
       body.append("file", blob, `capa-${draft.id}.jpg`);
