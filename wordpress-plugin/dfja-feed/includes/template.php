@@ -48,7 +48,9 @@ add_action('wp_head', function () {
     $title = wp_strip_all_tags(get_the_title($post_id));
     $description = wp_trim_words(wp_strip_all_tags(get_the_excerpt($post_id)), 35, '…');
     $url = get_permalink($post_id);
-    $image = get_post_meta($post_id, 'dfja_cover_image_url', true) ?: get_the_post_thumbnail_url($post_id, 'large') ?: get_post_meta($post_id, 'dfja_image_url', true);
+    // Use a URL da mídia original. O WordPress cria derivados para outros
+    // contextos, mas não deve substituir a dimensão da capa no compartilhamento.
+    $image = get_post_meta($post_id, 'dfja_cover_image_url', true) ?: get_the_post_thumbnail_url($post_id, 'full') ?: get_post_meta($post_id, 'dfja_image_url', true);
     if (!$image) return;
 
     printf("\n<!-- DFJÁ social preview -->\n<meta property=\"og:type\" content=\"article\">\n<meta property=\"og:site_name\" content=\"DFJÁ\">\n<meta property=\"og:title\" content=\"%s\">\n<meta property=\"og:description\" content=\"%s\">\n<meta property=\"og:url\" content=\"%s\">\n<meta property=\"og:image\" content=\"%s\">\n<meta name=\"twitter:card\" content=\"summary_large_image\">\n<meta name=\"twitter:title\" content=\"%s\">\n<meta name=\"twitter:description\" content=\"%s\">\n<meta name=\"twitter:image\" content=\"%s\">\n", esc_attr($title), esc_attr($description), esc_url($url), esc_url($image), esc_attr($title), esc_attr($description), esc_url($image));

@@ -13,7 +13,7 @@
 .dfja-card::before { background: radial-gradient(circle at 72% 18%, rgba(38,164,171,.42), transparent 42%), linear-gradient(145deg, rgba(6,20,39,.86), rgba(10,48,70,.5) 48%, rgba(2,7,15,.94)); content: ""; inset: 0; position: absolute; z-index: 1; }
 .dfja-card-shade { background: linear-gradient(180deg, rgba(2,7,15,.18) 0%, rgba(3,8,16,.42) 42%, rgba(3,8,16,.97) 88%); inset: 0; position: absolute; z-index: 2; }
 .slide-img-container { align-items: center; display: flex; inset: 0; justify-content: center; overflow: hidden; padding-bottom: 80px; position: absolute; z-index: 1; }
-.slide-img-center { border-radius: 0; height: auto; max-height: 70%; object-fit: contain; width: 100%; }
+.slide-img-center { border-radius: 0; height: auto; max-height: 70%; max-width: 100%; object-fit: contain; width: auto; }
 .slide-gradient { background: linear-gradient(180deg, rgba(3,8,16,.08) 18%, rgba(3,8,16,.34) 50%, rgba(3,8,16,.96) 88%); }
 .dfja-card-content { align-self: end; max-width: 760px; position: relative; width: 100%; z-index: 3; }
 .dfja-card-meta { color: #55d6be; font-size: 12px; font-weight: 700; text-transform: uppercase; }
@@ -108,7 +108,7 @@
   /* Composição Feed83 no celular: imagem em uma faixa própria e conteúdo
      abaixo, evitando que manchetes longas sejam desenhadas sobre a foto. */
   .slide-img-container { bottom: 51%; inset-inline: 0; padding-bottom: 0; top: 126px; }
-  .slide-img-center { max-height: 100%; width: 100%; }
+  .slide-img-center { max-height: 100%; max-width: 100%; width: auto; }
   .dfja-card-content { bottom: 24px; left: clamp(18px, 6vw, 24px); max-height: 47%; max-width: none; overflow: hidden; position: absolute; right: clamp(64px, 18vw, 76px); width: auto; }
 }
 
@@ -134,7 +134,7 @@
   .dfja-phone { width: min(680px, calc(100% - 48px), calc((100svh - 48px) * 4 / 5)); }
   .dfja-card { padding: 126px 88px 30px 30px; }
   .slide-img-container { bottom: 43%; height: 40%; inset-inline: 0; padding-bottom: 0; top: auto; }
-  .slide-img-center { max-height: 100%; width: 100%; }
+  .slide-img-center { max-height: 100%; max-width: 100%; width: auto; }
   .dfja-card-content { max-width: 100%; }
   .dfja-card h2 { font-size: clamp(24px, 1.7vw, 30px); line-height: 1.08; margin: 8px 0 10px; }
   .dfja-card p { font-size: clamp(15px, 1.05vw, 17px); line-height: 1.4; }

@@ -413,9 +413,11 @@ export default function AdminPanel() {
           logo.onerror = () => reject(new Error("Não foi possível carregar o logo."));
         });
       }
+      // Formato editorial das capas de referência: 399 × 501 (proporção
+      // preservada no arquivo final e no feed, sem depender do crop do WP).
       const canvas = document.createElement("canvas");
-      canvas.width = 1200;
-      canvas.height = 1500;
+      canvas.width = 1197;
+      canvas.height = 1503;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Editor de capa indisponível.");
       const drawCoverImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
