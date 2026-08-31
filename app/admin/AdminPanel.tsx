@@ -560,6 +560,7 @@ export default function AdminPanel() {
         content: draft.content,
         excerpt: draft.excerpt,
         image_url: draft.image_url,
+        cover_image_url: draft.cover_image_url,
         image_credit: draft.image_credit,
         source_name: draft.source_name,
         source_url: draft.source_url,
@@ -584,6 +585,8 @@ export default function AdminPanel() {
         wordpress_url: data.url,
         wordpress_post_id: data.id || draft.wordpress_post_id,
         wordpress_media_id: data.mediaId || draft.wordpress_media_id,
+        cover_image_url: draft.cover_image_url,
+        cover_media_id: data.mediaId || draft.cover_media_id,
       });
     }
     setPublishing(false);

@@ -124,12 +124,6 @@
   .dfja-topbar strong { font-size: 26px; }
   .dfja-topbar small { font-size: 12px; }
   .dfja-categories { padding: 78px 20px 16px; }
-  /* No computador, a capa precisa ter presença visual suficiente no card.
-     A imagem continua inteira em 4:5; apenas ampliamos a área reservada,
-     mantendo o título e o resumo em uma região independente. */
-  .slide-img-container { bottom: 41%; height: 47%; inset-inline: 0; padding-bottom: 0; top: auto; }
-  .slide-img-center { max-height: 100%; max-width: 100%; width: auto; }
-  .dfja-card-content { max-height: 38%; overflow: hidden; }
 }
 
 /* Desktop only: keep the tablet/mobile presentation untouched, but give
@@ -139,7 +133,7 @@
 @media (min-width: 1200px) {
   .dfja-phone { width: min(680px, calc(100% - 48px), calc((100svh - 48px) * 4 / 5)); }
   .dfja-card { padding: 126px 88px 30px 30px; }
-  .slide-img-container { bottom: 41%; height: 47%; inset-inline: 0; padding-bottom: 0; top: auto; }
+  .slide-img-container { bottom: 43%; height: 40%; inset-inline: 0; padding-bottom: 0; top: auto; }
   .slide-img-center { max-height: 100%; max-width: 100%; width: auto; }
   .dfja-card-content { max-width: 100%; }
   .dfja-card h2 { font-size: clamp(24px, 1.7vw, 30px); line-height: 1.08; margin: 8px 0 10px; }
