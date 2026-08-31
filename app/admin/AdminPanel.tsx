@@ -927,6 +927,11 @@ export default function AdminPanel() {
                         <strong>{coverTitle || draft.title || "Título da matéria"}</strong>
                         {coverSubtitle && <span>{coverSubtitle}</span>}
                       </div>
+                      <div className="cover-preview-feed-copy">
+                        <span>DFJÁ · {draft.author || "Redação"}</span>
+                        <strong>{draft.title || "Título da matéria"}</strong>
+                        <p>{draft.excerpt || "Resumo da matéria exibido no feed."}</p>
+                      </div>
                     </div>
                     <div className="cover-editor-options">
                       <label>

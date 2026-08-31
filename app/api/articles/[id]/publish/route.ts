@@ -207,6 +207,7 @@ export async function POST(
         dfja_source_name: currentArticle.source_name || "",
         dfja_source_url: currentArticle.source_url || "",
         dfja_image_url: currentArticle.image_url || "",
+        dfja_cover_image_url: currentArticle.cover_image_url || currentArticle.image_url || "",
         dfja_image_credit: currentArticle.image_credit || "",
         dfja_n8n_item_id: article.n8n_item_id || "",
       },

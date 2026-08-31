@@ -1026,7 +1026,7 @@ button {
 .cover-editor-heading span { color: #82909c; font-size: 11px; }
 .cover-preview {
   align-items: flex-end;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 390 / 844;
   background-color: #173047;
   background-position: center;
   background-size: cover;
@@ -1036,7 +1036,7 @@ button {
   padding: 16px;
   position: relative;
 }
-.cover-preview-image, .cover-preview-half { background-color: #173047; background-position: center; background-size: cover; inset: 0; position: absolute; }
+.cover-preview-image, .cover-preview-half { background-color: #173047; background-position: center; background-repeat: no-repeat; background-size: contain; bottom: auto; height: 55%; inset: 88px 0 auto; position: absolute; }
 .cover-preview-half { width: 50%; }
 .cover-preview-half + .cover-preview-half { left: 50%; }
 .cover-preview-logo { border-radius: 5px; color: #fff; font-size: 16px; font-weight: 800; left: 16px; padding: 8px 12px; position: absolute; top: 16px; z-index: 1; }
@@ -1045,9 +1045,14 @@ button {
 .cover-preview-top .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.95), rgba(3,8,16,.08)); }
 .cover-preview-faixa { background: #050505; }
 .cover-preview-faixa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.05), rgba(3,8,16,.15)); height: 58%; }
-.cover-preview-faixa .cover-preview-copy { background: #050505; inset: auto 0 0; max-width: none; padding: 18px 16px 20px; }
+.cover-preview-faixa .cover-preview-copy { bottom: 30%; max-width: 92%; }
 .cover-preview-limpa .cover-preview-gradient { background: linear-gradient(180deg, rgba(3,8,16,.02), rgba(3,8,16,.72)); }
-.cover-preview-copy { color: #fff; display: grid; gap: 6px; max-width: 92%; position: relative; text-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.cover-preview-feed-copy { align-self: flex-end; color: #d9e1ea; display: grid; gap: 4px; left: 16px; max-width: calc(100% - 32px); position: absolute; right: 16px; top: 72%; z-index: 2; }
+.cover-preview-feed-copy span { color: #55d6be; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.cover-preview-feed-copy strong { color: #fff; font-size: 13px; line-height: 1.1; }
+.cover-preview-feed-copy p { font-size: 10px; line-height: 1.25; margin: 0; max-height: 38px; overflow: hidden; }
+.cover-preview-copy { bottom: 30%; color: #fff; display: grid; gap: 6px; left: 16px; max-width: 92%; position: absolute; right: 16px; text-shadow: 0 1px 4px rgba(0,0,0,.4); z-index: 2; }
+.cover-preview-top .cover-preview-copy { bottom: auto; top: 112px; }
 .cover-preview-copy strong { font-size: clamp(18px, 2vw, 27px); line-height: 1.08; }
 .cover-preview-copy span { font-size: 12px; line-height: 1.3; }
 .cover-editor-options { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(130px, .45fr); }

@@ -42,7 +42,8 @@
   };
 
   function postFromDemo(item, index) { return { id: `demo-${index}`, title: { rendered: item[1] }, excerpt: { rendered: item[2] }, content: { rendered: `<p>${item[2]}</p><p>Texto demonstrativo preparado para validar a experiência de leitura do DFJÁ.</p>` }, meta: {}, _embedded: { 'wp:term': [[{ name: item[0] }]], 'wp:featuredmedia': [{ source_url: item[3] }] } }; }
-  function imageOf(post) { return post.meta?.dfja_image_url || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''; }
+  function imageOf(post) { return post.meta?.dfja_cover_image_url || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || post.meta?.dfja_image_url || ''; }
+  function articleImageOf(post) { return post.meta?.dfja_image_url || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''; }
   function closeMenus() { feed.querySelectorAll('.dfja-share-menu').forEach((node) => node.remove()); }
   function storageKey(post) { return `dfja-liked-${post.id}`; }
   const preferenceKey = 'dfja-category-preferences-v1';
@@ -116,7 +117,7 @@
 
   function openReader(post, fromHistory) {
     closeMenus();
-    const image = imageOf(post);
+    const image = articleImageOf(post);
     const meta = post.meta || {};
     const liked = localStorage.getItem(storageKey(post)) === '1';
     const author = post._embedded?.author?.[0]?.name || post.author_name || 'Redação';
