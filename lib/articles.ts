@@ -6,6 +6,7 @@ export type Article = {
   excerpt: string | null;
   content: string;
   image_url: string | null;
+  cover_image_url: string | null;
   video_url: string | null;
   source_name: string | null;
   published_at: string | null;
@@ -15,7 +16,7 @@ export type Article = {
 export async function getPublishedArticles(): Promise<Article[]> {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,excerpt,content,image_url,video_url,source_name,published_at,category:categories(name)")
+    .select("id,title,excerpt,content,image_url,cover_image_url,video_url,source_name,published_at,category:categories(name)")
     .eq("status", "published")
     .order("published_at", { ascending: false })
     .limit(20);

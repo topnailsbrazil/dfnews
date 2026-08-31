@@ -58,7 +58,10 @@ export default async function Home() {
         title: article.title,
         excerpt: article.excerpt || article.content.slice(0, 180),
         tone: "tone-blue",
-        image_url: article.image_url,
+        // A capa gerada é a imagem do feed; a imagem original permanece
+        // separada para a leitura da matéria.
+        image_url: article.cover_image_url || article.image_url,
+        article_image_url: article.image_url,
         source_name: article.source_name,
         video_url: null,
         instagram_url: null,
