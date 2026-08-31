@@ -1493,14 +1493,21 @@ button {
   min-width: 0;
 }
 .queue-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   min-width: 0;
 }
 .queue-actions button {
-  flex: 1 1 auto;
+  align-items: center;
+  display: inline-flex;
+  font-size: 14px;
+  justify-content: center;
+  line-height: 1.15;
+  min-height: 44px;
   min-width: 0;
+  padding: 9px 10px;
+  white-space: normal;
 }
 .queue-search {
   box-sizing: border-box;
@@ -1545,6 +1552,6 @@ button {
 }
 @media (max-width: 620px) {
   .queue-actions .run-flow-action {
-    flex-basis: 100%;
+    grid-column: span 2;
   }
 }
