@@ -210,11 +210,15 @@ export async function POST(request: NextRequest) {
       image_credit: row.image_credit,
       error: wordpressError || "",
     };
-    fetch(resultWebhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-dfja-pwa-secret": resultSecret },
-      body: JSON.stringify(callback),
-    }).catch(() => {});
+    try {
+      await fetch(resultWebhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-dfja-pwa-secret": resultSecret },
+        body: JSON.stringify(callback),
+      });
+    } catch (_) {
+      // A publicação permanece válida; o workflow 05 poderá reconciliar o item.
+    }
   }
   return NextResponse.json({
     ok: true,
