@@ -113,6 +113,11 @@ export default function AdminPanel() {
   const [coverSubtitle, setCoverSubtitle] = useState("");
   const [coverGradient, setCoverGradient] = useState(62);
   const [coverPosition, setCoverPosition] = useState("bottom");
+  const [coverTemplate, setCoverTemplate] = useState("jornal");
+  const [coverAccent, setCoverAccent] = useState("#147d6e");
+  const [coverLogoText, setCoverLogoText] = useState("DFJÁ");
+  const [coverSecondImageUrl, setCoverSecondImageUrl] = useState("");
+  const [coverLogoFile, setCoverLogoFile] = useState<File | null>(null);
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
   useEffect(() => {
     supabase.auth.getSession().then(
@@ -380,38 +385,75 @@ export default function AdminPanel() {
     setSaving(true);
     setMessage("Gerando a capa editorial…");
     try {
-      const sourceResponse = await fetch(`/api/image-proxy?url=${encodeURIComponent(draft.image_url)}`);
-      if (!sourceResponse.ok) {
-        const sourceError = await sourceResponse.json().catch(() => ({}));
-        throw new Error(sourceError.error || "Não foi possível carregar a imagem da capa.");
+      const loadImage = async (url: string) => {
+        const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+        if (!response.ok) throw new Error("Não foi possível carregar a imagem da capa.");
+        const objectUrl = URL.createObjectURL(await response.blob());
+        const loaded = new Image();
+        loaded.src = objectUrl;
+        await new Promise<void>((resolve, reject) => {
+          loaded.onload = () => resolve();
+          loaded.onerror = () => reject(new Error("Não foi possível decodificar a imagem."));
+        });
+        return { image: loaded, objectUrl };
+      };
+      const primary = await loadImage(draft.image_url);
+      const secondary = coverSecondImageUrl.trim() ? await loadImage(coverSecondImageUrl.trim()) : null;
+      const logoUrl = coverLogoFile ? URL.createObjectURL(coverLogoFile) : null;
+      const logo = logoUrl ? new Image() : null;
+      if (logo && logoUrl) {
+        logo.src = logoUrl;
+        await new Promise<void>((resolve, reject) => {
+          logo.onload = () => resolve();
+          logo.onerror = () => reject(new Error("Não foi possível carregar o logo."));
+        });
       }
-      const sourceBlob = await sourceResponse.blob();
-      const sourceUrl = URL.createObjectURL(sourceBlob);
-      const image = new Image();
-      image.src = sourceUrl;
-      await new Promise<void>((resolve, reject) => {
-        image.onload = () => resolve();
-        image.onerror = () => reject(new Error("Não foi possível decodificar a imagem."));
-      });
       const canvas = document.createElement("canvas");
       canvas.width = 1200;
-      canvas.height = 675;
+      canvas.height = 1500;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Editor de capa indisponível.");
-      const scale = Math.max(canvas.width / image.width, canvas.height / image.height);
-      const width = image.width * scale;
-      const height = image.height * scale;
-      context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+      const drawCoverImage = (image: HTMLImageElement, x: number, y: number, width: number, height: number) => {
+        const scale = Math.max(width / image.width, height / image.height);
+        const drawnWidth = image.width * scale;
+        const drawnHeight = image.height * scale;
+        context.drawImage(image, x + (width - drawnWidth) / 2, y + (height - drawnHeight) / 2, drawnWidth, drawnHeight);
+      };
+      context.fillStyle = coverTemplate === "faixa" ? "#050505" : coverAccent;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      if (coverTemplate === "dividida" && secondary) {
+        drawCoverImage(primary.image, 0, 0, canvas.width / 2, canvas.height * 0.62);
+        drawCoverImage(secondary.image, canvas.width / 2, 0, canvas.width / 2, canvas.height * 0.62);
+        context.fillStyle = "#050505";
+        context.fillRect(0, canvas.height * 0.62, canvas.width, canvas.height * 0.38);
+      } else if (coverTemplate === "faixa") {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height * 0.64);
+        context.fillStyle = "#050505";
+        context.fillRect(0, canvas.height * 0.58, canvas.width, canvas.height * 0.42);
+      } else {
+        drawCoverImage(primary.image, 0, 0, canvas.width, canvas.height);
+      }
       const opacity = Math.max(0, Math.min(100, coverGradient)) / 100;
       const gradient = context.createLinearGradient(0, coverPosition === "top" ? 0 : canvas.height, 0, coverPosition === "top" ? canvas.height : 0);
       gradient.addColorStop(0, `rgba(3, 8, 16, ${opacity})`);
       gradient.addColorStop(0.62, `rgba(3, 8, 16, ${opacity * 0.42})`);
       gradient.addColorStop(1, "rgba(3, 8, 16, 0.04)");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      const bottom = coverPosition === "top" ? 92 : canvas.height - 72;
+      if (coverTemplate !== "faixa") { context.fillStyle = gradient; context.fillRect(0, 0, canvas.width, canvas.height); }
+      if (logo) {
+        const logoHeight = 70;
+        const logoWidth = Math.min(300, logo.width * logoHeight / logo.height);
+        context.drawImage(logo, 54, 48, logoWidth, logoHeight);
+      } else if (coverLogoText.trim()) {
+        context.fillStyle = coverAccent;
+        context.fillRect(48, 44, 190, 70);
+        context.fillStyle = "#fff";
+        context.font = "800 38px Arial, sans-serif";
+        context.textBaseline = "middle";
+        context.fillText(coverLogoText.trim().slice(0, 18), 66, 80);
+      }
+      const bottom = coverPosition === "top" ? 160 : canvas.height - (coverTemplate === "dividida" || coverTemplate === "faixa" ? 90 : 110);
       context.fillStyle = "#ffffff";
-      context.font = "800 48px Arial, sans-serif";
+      context.font = coverTemplate === "dividida" ? "800 48px Georgia, serif" : "800 54px Arial, sans-serif";
       context.textBaseline = coverPosition === "top" ? "top" : "bottom";
       const wrap = (text: string, maxWidth: number) => {
         const words = text.trim().split(/\s+/).filter(Boolean);
@@ -427,10 +469,10 @@ export default function AdminPanel() {
       const titleLines = wrap(coverTitle || draft.title || "DFJÁ", canvas.width - 120);
       titleLines.forEach((line, index) => context.fillText(line, 60, coverPosition === "top" ? bottom + index * 56 : bottom - (titleLines.length - 1 - index) * 56));
       if (coverSubtitle.trim()) {
-        context.font = "500 24px Arial, sans-serif";
+        context.font = "500 25px Arial, sans-serif";
         context.fillStyle = "rgba(255,255,255,.88)";
         const subtitleY = coverPosition === "top" ? bottom + titleLines.length * 56 + 28 : bottom + 30;
-        context.fillText(coverSubtitle.trim().slice(0, 96), 60, subtitleY);
+        context.fillText(coverSubtitle.trim().slice(0, 110), 60, subtitleY);
       }
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
       if (!blob) throw new Error("Não foi possível exportar a capa.");
@@ -441,7 +483,9 @@ export default function AdminPanel() {
       if (!result.ok || !data.url) throw new Error(data.error || "Falha ao salvar a capa.");
       setDraft((current) => current ? { ...current, image_url: data.url, wordpress_media_id: data.mediaId || current.wordpress_media_id } : current);
       setMessage("Capa criada e vinculada à matéria.");
-      URL.revokeObjectURL(sourceUrl);
+      URL.revokeObjectURL(primary.objectUrl);
+      if (secondary) URL.revokeObjectURL(secondary.objectUrl);
+      if (logoUrl) URL.revokeObjectURL(logoUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível criar a capa.");
     } finally {
@@ -861,7 +905,7 @@ export default function AdminPanel() {
                       <span>Opcional · gera uma nova imagem de destaque</span>
                     </div>
                     <div
-                      className={`cover-preview cover-preview-${coverPosition}`}
+                      className={`cover-preview cover-preview-${coverPosition} cover-preview-${coverTemplate}`}
                       style={draft.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
                     >
                       <div className="cover-preview-gradient" style={{ opacity: coverGradient / 100 }} />
@@ -869,6 +913,21 @@ export default function AdminPanel() {
                         <strong>{coverTitle || draft.title || "Título da matéria"}</strong>
                         {coverSubtitle && <span>{coverSubtitle}</span>}
                       </div>
+                    </div>
+                    <div className="cover-editor-options">
+                      <label>
+                        Modelo
+                        <select value={coverTemplate} onChange={(e) => setCoverTemplate(e.target.value)}>
+                          <option value="jornal">Jornal</option>
+                          <option value="dividida">Dividida (duas imagens)</option>
+                          <option value="faixa">Faixa preta</option>
+                          <option value="limpa">Limpa</option>
+                        </select>
+                      </label>
+                      <label>
+                        Cor de destaque
+                        <input type="color" value={coverAccent} onChange={(e) => setCoverAccent(e.target.value)} />
+                      </label>
                     </div>
                     <label>
                       Título da capa
@@ -891,6 +950,22 @@ export default function AdminPanel() {
                         </select>
                       </label>
                     </div>
+                    <div className="cover-editor-options">
+                      <label>
+                        Logo ou selo (texto)
+                        <input value={coverLogoText} onChange={(e) => setCoverLogoText(e.target.value)} maxLength={18} placeholder="DFJÁ" />
+                      </label>
+                      <label>
+                        Logo personalizado
+                        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setCoverLogoFile(e.target.files?.[0] || null)} />
+                      </label>
+                    </div>
+                    {coverTemplate === "dividida" && (
+                      <label>
+                        URL da segunda imagem
+                        <input type="url" value={coverSecondImageUrl} onChange={(e) => setCoverSecondImageUrl(e.target.value)} placeholder="https://..." />
+                      </label>
+                    )}
                     <button type="button" className="secondary-action cover-generate" onClick={createCover} disabled={saving || !draft.image_url}>
                       {saving ? "Gerando capa…" : "Criar capa e salvar"}
                     </button>
