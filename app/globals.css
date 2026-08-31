@@ -146,6 +146,9 @@ button {
   display: none;
 }
 .story {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
   display: flex;
   isolation: isolate;
   min-height: 100dvh;
