@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Category = { id: string; name: string };
@@ -135,6 +135,7 @@ export default function AdminPanel() {
   const [coverImageX, setCoverImageX] = useState(50);
   const [coverImageY, setCoverImageY] = useState(50);
   const [view, setView] = useState<"all" | "new" | "review" | "published">("all");
+  const editorPanelRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     supabase.auth.getSession().then(
       ({ data }) =>
@@ -214,6 +215,14 @@ export default function AdminPanel() {
       setCoverTitle(draft.title || "DFJÁ");
       setCoverSubtitle(draft.excerpt || "");
     }
+  }, [draft?.id]);
+  useEffect(() => {
+    if (!draft?.id || typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 900px)").matches) return;
+    const frame = window.requestAnimationFrame(() => {
+      editorPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [draft?.id]);
   const filtered = useMemo(() => {
     const source = view === "published" ? publishedArticles : articles;
@@ -780,8 +789,10 @@ export default function AdminPanel() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ")
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
                     select(article);
+                  }
                 }}
               >
                 {displayImage(article) ? (
@@ -817,7 +828,7 @@ export default function AdminPanel() {
             )}
           </div>
         </aside>
-        <section className="editor-panel">
+        <section className="editor-panel" ref={editorPanelRef}>
           {draft ? (
             <>
               <div className="editor-toolbar">

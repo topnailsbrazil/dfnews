@@ -1638,6 +1638,9 @@ button {
   .editorial-layout {
     grid-template-columns: 1fr;
   }
+  .editor-panel {
+    scroll-margin-top: 16px;
+  }
 }
 @media (max-width: 620px) {
   .queue-actions .run-flow-action {
