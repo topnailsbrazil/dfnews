@@ -1,4 +1,5 @@
 import { getPublishedArticles, type Article } from "../lib/articles";
+import { cleanFeedText } from "../lib/text";
 import FeedDemo from "./FeedDemo";
 
 export const dynamic = "force-dynamic";
@@ -55,8 +56,8 @@ export default async function Home() {
   const articles = await getPublishedArticles();
   const publishedStories = articles.map((article: Article) => ({
         category: article.category?.[0]?.name || "DFJÁ",
-        title: article.title,
-        excerpt: article.excerpt || article.content.slice(0, 180),
+        title: cleanFeedText(article.title),
+        excerpt: cleanFeedText(article.excerpt || article.content).slice(0, 1000),
         tone: "tone-blue",
         // A capa gerada é a imagem do feed; a imagem original permanece
         // separada para a leitura da matéria.

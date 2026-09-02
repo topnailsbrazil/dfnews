@@ -146,25 +146,53 @@ button {
   display: none;
 }
 .story {
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
+  background: #05070b;
   display: flex;
+  flex-direction: column;
   isolation: isolate;
-  min-height: 100dvh;
   overflow: hidden;
-  padding: 188px 24px 28px;
   position: relative;
   scroll-snap-align: start;
 }
+.story-media {
+  background: #11151c;
+  line-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+.story-media img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+.story-media-fallback {
+  align-items: center;
+  aspect-ratio: 16 / 9;
+  color: var(--accent);
+  display: flex;
+  font-size: 32px;
+  font-weight: 900;
+  justify-content: center;
+}
+.story-media-fallback span {
+  color: #fff;
+  font-weight: 500;
+  margin-left: 4px;
+}
+.story-content {
+  background: linear-gradient(180deg, rgba(7, 12, 20, 0.96), #05070b 42%);
+  padding: 22px 24px 30px;
+  width: 100%;
+}
 .story::before {
-  background-position: center;
-  background-size: cover;
+  background: radial-gradient(circle at 75% 0%, rgba(22, 122, 155, 0.2), transparent 44%);
   content: "";
   inset: 0;
-  opacity: 0.8;
+  pointer-events: none;
   position: absolute;
-  z-index: -2;
+  z-index: -1;
 }
 .tone-blue::before {
   background:
@@ -190,17 +218,6 @@ button {
   background:
     radial-gradient(circle at 65% 20%, #168ca1, transparent 42%),
     linear-gradient(145deg, #071f35, #14566c 60%, #07111f);
-}
-.story-overlay {
-  background: linear-gradient(transparent 25%, rgba(3, 8, 16, 0.88) 83%);
-  inset: 0;
-  position: absolute;
-  z-index: -1;
-}
-.story-content {
-  align-self: end;
-  max-width: 720px;
-  width: 100%;
 }
 .story-meta,
 .story-footer {
@@ -235,7 +252,7 @@ button {
   font-size: 8px;
 }
 .story h1 {
-  font-size: clamp(24px, 5.8vw, 48px);
+  font-size: clamp(25px, 5vw, 38px);
   letter-spacing: -0.035em;
   line-height: 1.04;
   margin: 12px 0;
@@ -247,6 +264,10 @@ button {
   line-height: 1.4;
   margin: 0 0 22px;
   max-width: 560px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .story-hint {
   color: #fff;
@@ -260,7 +281,7 @@ button {
   padding-top: 14px;
 }
 .social-rail {
-  bottom: 110px;
+  top: 42%;
   display: grid;
   gap: 13px;
   position: absolute;
